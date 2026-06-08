@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenStem · learn the why, then practice the questions</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="cases.js?v=24"></script>
+<script>window.CASES = (typeof CASES!=="undefined") ? CASES : [];</script>
+<style>
+  /* ── Theme tokens (from Ward Moments) ── */
+  :root, [data-theme="dark"] {
+    --bg:#0b0e14; --bg-2:#0f1117; --panel:#161b27; --panel-2:#1a2030; --border:#273043; --border-2:#1e2535;
+    --ink:#eef3fa; --ink-soft:#c2cdde; --mid:#8b98ad; --dim:#61708a;
+    --accent:#9ec5fe; --accent-2:#6aa3f5; --accent-3:#2563eb;
+    --good:#4ade80; --good-deep:#15351f; --warn:#fbbf24; --bad:#cf9f9a;
+    --hero-glow: radial-gradient(ellipse 70% 80% at 75% 0%, rgba(37,99,235,0.22), transparent 60%),
+                 radial-gradient(ellipse 60% 70% at 0% 100%, rgba(37,99,235,0.10), transparent 55%);
+    --shadow:0 12px 30px rgba(0,0,0,0.35);
+  }
+  [data-theme="light"] {
+    --bg:#ffffff; --bg-2:#e7eef8; --panel:#eef3fb; --panel-2:#e3ebf7; --border:#cfd9ea; --border-2:#dde5f0;
+    --ink:#11213b; --ink-soft:#2f3e57; --mid:#586379; --dim:#8693a8;
+    --accent:#1d4ed8; --accent-2:#2563eb; --accent-3:#2563eb;
+    --good:#15803d; --good-deep:#dcfce7; --warn:#b45309; --bad:#b07a76;
+    --hero-glow: radial-gradient(ellipse 70% 80% at 80% -10%, rgba(37,99,235,0.10), transparent 60%);
+    --shadow:0 12px 30px rgba(20,40,80,0.10);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); font-size:16.5px; line-height:1.65;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; transition:background .2s ease, color .2s ease; }
+  a { color:inherit; }
+
+  nav { position:sticky; top:0; z-index:50; background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--border-2); }
+  .nav-inner { max-width:1080px; margin:0 auto; padding:9px 22px; min-height:62px; display:flex; align-items:center; gap:6px 12px; flex-wrap:wrap; }
+  .nav-pages { flex:1 1 auto; display:flex; align-items:center; justify-content:space-evenly; gap:2px; flex-wrap:wrap; }
+  .nav-user { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  @media (max-width:900px){ .nav-pages{ justify-content:flex-start; } .nav-link{ padding:6px 9px; font-size:0.83rem; } .brand-name{ font-size:1.02rem; } }
+  @media (max-width:560px){ .nav-pages{ width:100%; order:3; justify-content:flex-start; gap:0; } .nav-user{ margin-left:auto; } }
+  .brand { display:flex; align-items:center; gap:10px; cursor:pointer; background:none; border:none; }
+  .brand-name { font-size:1.12rem; font-weight:800; color:var(--ink); letter-spacing:-0.3px; }
+  .brand-name .stem { color:var(--accent-2); }
+  .brand-tag { font-size:0.74rem; font-weight:700; color:var(--mid); letter-spacing:0.1px; padding-left:9px; margin-left:7px; border-left:1.5px solid var(--border); white-space:nowrap; }
+  @media (max-width:560px){ .brand-tag { display:none; } }
+  .wm-logo { color:var(--accent-2); flex-shrink:0; display:block; }
+  .nav-right { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .nav-link { background:none; border:none; cursor:pointer; color:var(--mid); font-size:0.88rem; font-weight:700;
+    padding:7px 13px; border-radius:8px; transition:all .14s; font-family:inherit; }
+  .nav-link:hover { color:var(--accent); background:var(--panel-2); }
+  .nav-link.active { color:var(--accent); background:var(--panel-2); }
+  .persona { background:var(--panel-2); color:var(--ink); border:1.5px solid var(--border); border-radius:999px;
+    padding:7px 10px; font-family:inherit; font-size:0.8rem; font-weight:600; cursor:pointer; }
+  .theme-toggle { background:none; border:1.5px solid var(--border); cursor:pointer; width:38px; height:38px;
+    border-radius:999px; font-size:1rem; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .14s; }
+  .theme-toggle:hover { border-color:var(--accent-2); }
+
+  .wrap { max-width:1000px; margin:0 auto; padding:0 24px; }
+  .section { padding:48px 0; }
+
+  .hero { position:relative; overflow:hidden; padding:84px 0 52px; background:var(--hero-glow); border-bottom:1px solid var(--border-2); }
+  .hero-eyebrow { display:inline-flex; align-items:center; gap:9px; font-size:0.72rem; font-weight:800;
+    letter-spacing:1.6px; text-transform:uppercase; color:var(--accent); margin-bottom:18px; }
+  .hero-eyebrow::before { content:''; width:22px; height:2px; background:var(--accent-2); }
+  .hero h1 { font-size:clamp(2.3rem,5vw,3.5rem); font-weight:800; line-height:1.08; letter-spacing:-1.2px;
+    color:var(--ink); max-width:800px; margin-bottom:18px; }
+  .hero h1 em { font-style:normal; color:var(--accent); }
+  .hero-sub { font-size:1.12rem; color:var(--ink-soft); max-width:620px; margin-bottom:26px; }
+  .btn { font-family:inherit; font-size:1rem; font-weight:700; cursor:pointer; padding:15px 34px; border-radius:999px; border:none; transition:all .16s; }
+  .btn-primary { background:var(--accent-3); color:#fff; box-shadow:0 8px 22px rgba(37,99,235,0.32); }
+  .btn-primary:hover { filter:brightness(1.07); transform:translateY(-2px); }
+  .hero-note { margin-top:18px; font-size:0.84rem; color:var(--dim); display:flex; align-items:center; gap:8px; }
+  .hero-note::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--good); flex-shrink:0; }
+
+  .kicker { font-size:0.72rem; font-weight:800; letter-spacing:1.6px; text-transform:uppercase; color:var(--accent);
+    margin-bottom:12px; display:flex; align-items:center; gap:9px; }
+  .kicker::before { content:''; width:18px; height:2px; background:var(--accent-2); }
+  .h2 { font-size:clamp(1.5rem,3.2vw,2rem); font-weight:800; letter-spacing:-0.4px; color:var(--ink); }
+  .sec-head { margin-bottom:24px; }
+  .sec-lead { font-size:1rem; color:var(--ink-soft); line-height:1.65; max-width:660px; margin-top:10px; }
+
+  .how-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+  .how-card { background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:22px 22px; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
+  .how-num { width:28px; height:28px; border-radius:8px; background:color-mix(in srgb,var(--accent-3) 18%,transparent);
+    color:var(--accent); font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+  .how-card h3 { font-size:1rem; font-weight:700; color:var(--ink); margin-bottom:5px; }
+  .how-card p { font-size:0.9rem; color:var(--mid); line-height:1.6; }
+  .stat-num { font-size:1.7rem; font-weight:800; color:var(--ink); }
+  .stat-num.good { color:var(--good); } .stat-num.warn { color:var(--warn); }
+
+  .lib-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:16px; }
+  .lib-card { text-align:left; background:var(--panel); border:1.5px solid var(--border); border-radius:20px;
+    padding:24px; cursor:pointer; transition:all .18s; font-family:inherit; color:inherit; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .lib-card:hover { border-color:var(--accent-2); transform:translateY(-3px); box-shadow:0 16px 36px rgba(0,0,0,0.14); }
+  .lib-tag { font-size:0.64rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--accent); }
+  .lib-card h3 { font-size:1.12rem; font-weight:800; color:var(--ink); margin:4px 0; }
+  .lib-rot { font-size:0.84rem; color:var(--mid); }
+  .lib-foot { display:flex; align-items:center; gap:10px; margin-top:15px; padding-top:14px; border-top:1px solid var(--border-2); }
+  .prog-dots { display:flex; gap:5px; } .pdot { width:8px; height:8px; border-radius:50%; background:var(--border); }
+  .pdot.done { background:var(--accent-2); } .prog-text { font-size:0.76rem; color:var(--dim); font-weight:600; }
+  .star-btn { margin-left:auto; background:none; border:none; cursor:pointer; font-size:1.05rem; line-height:1; color:var(--dim); }
+  .star-btn.on { color:var(--accent-2); }
+
+  .cat-tabs { display:inline-flex; gap:4px; flex-wrap:wrap; margin-bottom:22px; background:var(--panel-2);
+    border:1px solid var(--border); border-radius:999px; padding:5px; }
+  .cat-tab { padding:9px 18px; border-radius:999px; border:none; background:transparent; color:var(--mid);
+    font-size:0.82rem; font-weight:800; cursor:pointer; transition:all .14s; font-family:inherit; display:inline-flex; gap:7px; align-items:center; }
+  .cat-tab:hover { color:var(--accent); } .cat-tab.active { background:var(--accent-3); color:#fff; box-shadow:0 3px 10px rgba(37,99,235,0.30); }
+  .cat-count { font-size:0.72rem; font-weight:700; opacity:.65; } .cat-tab.active .cat-count { opacity:.9; color:#d6e6ff; }
+
+  .back-link { background:none; border:none; cursor:pointer; font-family:inherit; color:var(--mid); font-size:0.88rem;
+    font-weight:600; padding:4px 0; margin-bottom:16px; }
+  .back-link:hover { color:var(--accent); }
+  .case-rot { font-size:0.72rem; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+  .case-title { font-size:2.1rem; font-weight:800; color:var(--ink); letter-spacing:-0.7px; }
+  .case-sub { font-size:0.88rem; color:var(--mid); margin-top:3px; margin-bottom:22px; }
+
+  .ward { background:var(--panel); border:1.5px solid var(--border); border-radius:20px; padding:26px; margin-bottom:18px; box-shadow:0 4px 16px rgba(0,0,0,0.05); }
+  .ward-label { display:flex; align-items:center; gap:9px; font-size:0.82rem; font-weight:800; letter-spacing:1.6px; color:var(--accent); text-transform:uppercase; margin-bottom:13px; }
+  .brand-dot { width:7px; height:7px; border-radius:50%; background:var(--accent-2); box-shadow:0 0 12px var(--accent-2); }
+  .ward-scn { font-size:1rem; line-height:1.7; color:var(--ink); font-weight:500; margin-bottom:6px; }
+  .ward-why { font-size:0.84rem; color:var(--dim); line-height:1.55; border-top:1px solid var(--border-2); padding-top:12px; margin-top:16px; }
+  .prompt-block { margin-top:18px; }
+  .prompt-q { background:color-mix(in srgb,var(--accent-3) 8%,transparent); border-left:3px solid var(--accent-2);
+    border-radius:0 8px 8px 0; padding:12px 15px; font-size:0.98rem; line-height:1.55; color:var(--ink); font-weight:600; margin-bottom:10px; }
+  .answer-textarea { width:100%; min-height:84px; padding:13px 15px; background:var(--bg-2); border:1.5px solid var(--border);
+    border-radius:9px; color:var(--ink); font-size:0.94rem; line-height:1.6; font-family:inherit; resize:vertical; }
+  .answer-textarea:focus { outline:none; border-color:var(--accent-2); }
+  .answer-textarea::placeholder { color:var(--dim); }
+  .grade-btn { margin-top:10px; padding:10px 24px; border:none; border-radius:999px; background:color-mix(in srgb,var(--accent-3) 22%,transparent);
+    color:var(--accent); font-size:0.86rem; font-weight:700; cursor:pointer; font-family:inherit; }
+  .grade-btn:hover:not(:disabled) { background:var(--accent-3); color:#fff; } .grade-btn:disabled { opacity:.45; cursor:default; }
+  .rubric { margin-top:12px; background:var(--bg-2); border:1.5px solid var(--border); border-radius:9px; padding:14px 16px; }
+  .rubric-head { font-size:0.72rem; font-weight:800; letter-spacing:.8px; color:var(--dim); text-transform:uppercase; margin-bottom:11px; }
+  .rubric-item { display:flex; gap:11px; align-items:flex-start; margin-bottom:8px; font-size:0.9rem; line-height:1.5; }
+  .rubric-cdot { flex-shrink:0; width:7px; height:7px; border-radius:50%; margin-top:7px; }
+  .rubric-hit { color:var(--accent); } .rubric-hit .rubric-cdot { background:var(--accent-2); }
+  .rubric-miss { color:var(--dim); } .rubric-miss .rubric-cdot { background:var(--border); }
+
+  .vignette { background:var(--panel-2); border:1.5px solid var(--border); border-left:3px solid var(--accent-2);
+    border-radius:0 18px 18px 0; padding:17px 21px; margin-bottom:18px; font-size:1rem; line-height:1.7; color:var(--ink); font-weight:500; }
+  .vignette-label { font-size:0.82rem; font-weight:800; letter-spacing:1.6px; color:var(--accent); text-transform:uppercase; margin-bottom:9px; }
+
+  .modes { display:inline-flex; gap:4px; flex-wrap:wrap; margin-bottom:24px; background:var(--panel-2); border:1px solid var(--border); border-radius:999px; padding:5px; }
+  .mode-btn { padding:9px 18px; border-radius:999px; border:none; background:transparent; color:var(--mid); font-size:0.82rem;
+    font-weight:700; cursor:pointer; font-family:inherit; display:flex; gap:6px; align-items:baseline; }
+  .mode-btn .mlabel { font-weight:800; } .mode-btn .msub { font-size:0.72rem; font-weight:600; opacity:.8; }
+  .mode-btn:hover { color:var(--accent); } .mode-btn.active { background:var(--accent-3); color:#fff; }
+  .mode-btn.soon { opacity:.55; }
+
+  .prow { display:flex; gap:9px; align-items:center; margin-bottom:14px; }
+  .pill { padding:3px 11px; border-radius:11px; font-size:0.74rem; font-weight:700; background:var(--panel-2); color:var(--mid); border:1px solid var(--border); }
+  .pbar { flex:1; height:3px; background:var(--panel-2); border-radius:3px; overflow:hidden; }
+  .pfill { height:100%; background:var(--accent-2); transition:width .4s ease; }
+  .mode-intro { font-size:0.82rem; color:var(--dim); font-style:italic; margin-bottom:14px; }
+
+  .qblock { background:var(--panel); border:1.5px solid var(--border); border-radius:20px; padding:26px; margin-bottom:14px;
+    scroll-margin-top:84px; box-shadow:0 4px 16px rgba(0,0,0,0.05); }
+  .qid { font-size:0.68rem; font-weight:800; color:var(--accent); letter-spacing:1.4px; text-transform:uppercase; margin-bottom:9px; }
+  .qstem { font-size:1.08rem; line-height:1.55; color:var(--ink); font-weight:600; margin-bottom:18px; }
+  .choices { display:flex; flex-direction:column; gap:9px; }
+  .choice { text-align:left; padding:13px 16px; border-radius:9px; border:1.5px solid var(--border); background:var(--bg-2);
+    color:var(--ink); font-size:0.95rem; line-height:1.5; font-weight:500; cursor:pointer; transition:all .13s; font-family:inherit; display:flex; gap:10px; }
+  .choice:hover:not(:disabled) { border-color:var(--accent-2); }
+  .choice.selected { border-color:var(--accent-2); background:var(--panel-2); }
+  .choice.correct { border-color:var(--good); background:var(--good-deep); }
+  .choice.wrong { border-color:var(--bad); background:color-mix(in srgb,var(--bad) 14%,transparent); }
+  .choice:disabled { cursor:default; }
+  .choice-letter { font-weight:800; color:var(--accent); flex-shrink:0; }
+  .choice.correct .choice-letter { color:var(--good); } .choice.wrong .choice-letter { color:var(--bad); }
+  .kbd-hint { font-size:0.76rem; color:var(--dim); margin-top:11px; }
+  .feedback { margin-top:14px; padding:14px 17px; background:var(--bg-2); border-left:3px solid var(--good); border-radius:0 8px 8px 0;
+    font-size:0.92rem; line-height:1.65; color:var(--ink); font-weight:500; animation:fade .25s ease; }
+  .feedback.bad { border-left-color:var(--bad); }
+  .fb-result { font-weight:800; margin-bottom:5px; }
+  @keyframes fade { from { opacity:0; transform:translateY(5px);} to { opacity:1;} }
+  .submit-btn, .next-btn { margin-top:15px; padding:11px 28px; border:none; border-radius:999px; font-family:inherit;
+    font-size:0.88rem; font-weight:700; cursor:pointer; background:var(--accent-3); color:#fff; transition:all .13s; }
+  .submit-btn:disabled { background:var(--panel-2); color:var(--dim); cursor:default; }
+  .submit-btn:hover:not(:disabled), .next-btn:hover { filter:brightness(1.08); }
+
+  .reveal { margin-top:26px; animation:fade .35s ease; }
+  .reveal-heading { font-size:1.25rem; font-weight:800; color:var(--ink); letter-spacing:-0.3px; margin-bottom:18px; }
+  .reveal-title { font-size:0.68rem; font-weight:800; letter-spacing:1.4px; color:var(--accent); text-transform:uppercase; margin-bottom:10px; }
+  .flow { display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; margin-bottom:22px; }
+  .flow-node { background:var(--panel); border:1.5px solid var(--border); border-radius:9px; padding:10px 13px; font-size:0.82rem; font-weight:700; color:var(--ink); display:flex; align-items:center; }
+  .flow-node.last { border-color:var(--good); color:var(--good); }
+  .flow-arrow { display:flex; align-items:center; color:var(--accent-2); font-size:1.1rem; font-weight:800; }
+  .flow-node.dim, .chain-step.dim { opacity:.28; cursor:pointer; } .flow-arrow.dim { opacity:.28; }
+  .reveal-hint { font-size:0.8rem; color:var(--dim); margin:4px 0 14px; }
+  .reveal-next { margin-top:14px; padding:9px 20px; border:1.5px solid var(--border); background:transparent; color:var(--accent);
+    font-weight:700; font-size:0.82rem; border-radius:999px; cursor:pointer; font-family:inherit; }
+  .reveal-next:hover { border-color:var(--accent-2); }
+  .mech-cols { display:grid; grid-template-columns:1fr 300px; gap:24px; align-items:start; }
+  .mech-curve { position:sticky; top:80px; }
+  @media (max-width:760px){ .mech-cols { grid-template-columns:1fr; } .mech-curve { position:static; } }
+  .chain { display:flex; flex-direction:column; } .chain-step { display:flex; }
+  .chain-left { display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0; }
+  .chain-dot { width:13px; height:13px; border-radius:50%; border:2px solid var(--accent-2); background:var(--bg-2); margin-top:14px; flex-shrink:0; }
+  .chain-line { width:2px; background:var(--border); flex:1; margin-top:2px; }
+  .chain-content { flex:1; padding:10px 0 16px 13px; }
+  .chain-label { font-size:0.94rem; font-weight:700; color:var(--ink); margin-bottom:4px; }
+  .chain-detail { font-size:0.88rem; line-height:1.6; color:var(--mid); }
+  .starling { margin-top:8px; background:var(--panel); border:1.5px solid var(--border); border-radius:18px; padding:19px 21px; }
+  .starling-label { font-size:0.68rem; font-weight:800; letter-spacing:1px; color:var(--accent); text-transform:uppercase; margin-bottom:9px; }
+  .starling p { font-size:0.9rem; line-height:1.75; color:var(--ink-soft); }
+  .pearl { margin-top:14px; background:var(--good-deep); border:1.5px solid color-mix(in srgb,var(--good) 45%,var(--border)); border-radius:18px; padding:17px 21px; }
+  .pearl-label { font-size:0.68rem; font-weight:800; letter-spacing:1px; color:var(--good); text-transform:uppercase; margin-bottom:8px; }
+  .pearl p { font-size:0.9rem; line-height:1.7; color:var(--ink-soft); }
+  hr.div { border:none; border-top:1px solid var(--border-2); margin:22px 0; }
+
+  .curve-wrap { margin-top:8px; background:var(--panel); border:1.5px solid var(--border); border-radius:18px; padding:18px 18px 14px; }
+  .curve-toggle { display:inline-flex; gap:4px; background:var(--panel-2); border:1px solid var(--border); border-radius:999px; padding:4px; margin-bottom:14px; }
+  .curve-btn { border:none; background:transparent; color:var(--mid); font-family:inherit; font-weight:700; font-size:0.8rem; padding:8px 16px; border-radius:999px; cursor:pointer; }
+  .curve-btn.on { background:var(--accent-3); color:#fff; }
+  .curve-svg { width:100%; height:auto; display:block; }
+  .curve-axis { stroke:var(--border); stroke-width:1.5; } .curve-axislabel { fill:var(--mid); font-size:11px; font-weight:600; }
+  .curve-normal { stroke:var(--dim); stroke-width:2; stroke-dasharray:4 4; } .curve-failing { stroke:var(--accent-2); stroke-width:2.5; }
+  .curve-label-normal { fill:var(--dim); font-size:11px; font-weight:700; } .curve-label-failing { fill:var(--accent); font-size:11px; font-weight:700; }
+  .curve-guide { stroke:var(--accent-2); stroke-width:1; stroke-dasharray:3 3; opacity:.55; }
+  .curve-dot { fill:var(--good); stroke:var(--panel); stroke-width:3; }
+  .curve-readout { display:flex; flex-wrap:wrap; gap:16px; margin-top:12px; font-size:0.86rem; color:var(--ink-soft); }
+  .curve-readout b { color:var(--ink); font-weight:700; }
+  .curve-wrap.compact { background:var(--bg-2); padding:12px 14px 10px; margin-bottom:18px; }
+  .curve-wrap.compact .curve-svg { max-width:330px; margin:0 auto; }
+  .curve-wrap.compact .curve-readout { font-size:0.78rem; gap:12px; margin-top:8px; justify-content:center; }
+  .curve-mini-label { font-size:0.66rem; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+
+  .case-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center; }
+  .ghost-btn { padding:9px 20px; background:transparent; border:1.5px solid var(--border); border-radius:999px; color:var(--mid);
+    font-size:0.84rem; font-weight:600; cursor:pointer; transition:all .14s; font-family:inherit; }
+  .ghost-btn:hover { border-color:var(--accent-2); color:var(--accent); } .ghost-btn.on { border-color:var(--accent-2); color:var(--accent); }
+  .inprog { background:var(--panel); border:1.5px dashed var(--border); border-radius:20px; padding:40px 28px; text-align:center; }
+  .inprog-badge { display:inline-block; padding:4px 12px; border-radius:20px; background:var(--bg-2); border:1px solid var(--border);
+    font-size:0.68rem; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:var(--dim); margin-bottom:13px; }
+  .inprog h3 { font-size:1.05rem; font-weight:700; color:var(--mid); margin-bottom:7px; }
+  .inprog p { font-size:0.9rem; color:var(--dim); line-height:1.6; max-width:440px; margin:0 auto; }
+
+  /* OpenStem additions */
+  .banner { background:color-mix(in srgb,var(--accent-3) 8%,transparent); border:1px solid var(--border); border-radius:14px;
+    padding:13px 16px; font-size:0.9rem; color:var(--ink-soft); margin-bottom:18px; line-height:1.6; }
+  .os-badge { display:inline-block; padding:2px 9px; border-radius:11px; font-size:0.62rem; font-weight:800; letter-spacing:.4px; text-transform:uppercase; }
+  .os-badge.ready { color:var(--good); background:var(--good-deep); }
+  .os-badge.polish { color:var(--warn); background:color-mix(in srgb,var(--warn) 16%,transparent); }
+  .os-badge.src { color:var(--accent); background:color-mix(in srgb,var(--accent-3) 14%,transparent); }
+  .os-stars { cursor:pointer; color:var(--dim); font-size:1.1rem; user-select:none; }
+  .os-stars b { color:var(--accent-2); font-weight:400; }
+  .os-bar { background:var(--panel-2); border:1px solid var(--border); border-radius:6px; height:9px; overflow:hidden; }
+  .os-bar > div { height:100%; background:var(--accent-2); }
+  .os-input { width:100%; padding:11px 14px; background:var(--bg-2); border:1.5px solid var(--border); border-radius:9px;
+    color:var(--ink); font-size:0.94rem; font-family:inherit; }
+  .os-input:focus { outline:none; border-color:var(--accent-2); }
+  .os-link { background:none; border:none; cursor:pointer; font-family:inherit; color:var(--accent); font-size:0.84rem; font-weight:700; }
+.anki-wrap { position:relative; display:inline-block; }
+.anki-btn { background:var(--bg-2); border:1px solid var(--border); border-radius:8px; cursor:pointer; font-family:inherit; color:var(--mid); font-size:0.76rem; font-weight:800; letter-spacing:0.2px; padding:4px 10px; transition:color .15s, border-color .15s; }
+.anki-btn:hover { color:var(--accent); border-color:var(--accent); }
+.anki-help { position:absolute; right:0; top:calc(100% + 6px); width:268px; z-index:30; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:9px 11px; font-size:0.74rem; font-weight:600; line-height:1.5; color:var(--mid); text-align:left; text-transform:none; letter-spacing:0; box-shadow:0 10px 26px rgba(0,0,0,0.18); }
+.anki-help b { color:var(--ink); }
+.mech-source { margin-top:14px; font-size:0.8rem; color:var(--dim); font-style:italic; border-top:1px dashed var(--border); padding-top:10px; }
+/* ===== Authors / credit layer ===== */
+.avatar { display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:800; letter-spacing:0.3px; flex:none; box-shadow:0 2px 8px rgba(0,0,0,0.18); }
+.author-hero { background:var(--bg-2); border:1.5px solid var(--border); border-radius:18px; padding:16px; margin-bottom:26px; }
+.author-byline { display:inline-flex; align-items:center; gap:11px; background:none; border:none; cursor:pointer; text-align:left; padding:2px; border-radius:10px; font-family:inherit; }
+.author-byline:hover .ab-name { color:var(--accent); }
+.ab-text { display:flex; flex-direction:column; gap:1px; }
+.ab-name { font-weight:800; color:var(--ink); font-size:0.96rem; }
+.ab-cred { font-weight:700; color:var(--mid); font-size:0.8rem; }
+.ab-role { font-size:0.8rem; color:var(--mid); font-weight:600; }
+.verify-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(34,197,94,0.12); color:var(--good); border:1px solid rgba(34,197,94,0.45); border-radius:999px; padding:4px 11px; font-size:0.78rem; font-weight:800; white-space:nowrap; }
+.verify-badge .vb-check { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:var(--good); color:#fff; font-size:0.6rem; }
+.verify-mini { color:var(--good); font-weight:700; }
+.os-stars-static { color:#f5b301; font-weight:800; white-space:nowrap; font-size:0.85rem; }
+.os-stars-static b { color:var(--ink); }
+.aq-card { background:var(--panel); border:1.5px solid var(--border); border-radius:16px; padding:18px; }
+.aq-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.aq-verify { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+.aq-cite { font-size:0.72rem; color:var(--dim); font-weight:700; letter-spacing:0.3px; }
+.aq-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px; padding-top:12px; border-top:1px solid var(--border); font-size:0.82rem; color:var(--mid); }
+.aq-foot b { color:var(--ink); }
+.lb { display:flex; flex-direction:column; gap:8px; }
+.lb-row { display:grid; grid-template-columns:28px 40px 1fr repeat(2,82px); align-items:center; gap:12px; background:var(--panel); border:1.5px solid var(--border); border-radius:14px; padding:11px 14px; cursor:pointer; text-align:left; font-family:inherit; }
+.lb-row:hover { border-color:var(--accent); }
+.lb-rank { font-weight:800; color:var(--dim); font-size:1.05rem; text-align:center; }
+.lb-name { font-weight:800; color:var(--ink); font-size:0.9rem; line-height:1.3; }
+.lb-sub { font-weight:600; color:var(--mid); font-size:0.74rem; }
+.lb-stat { display:flex; flex-direction:column; align-items:center; }
+.lb-stat b { color:var(--ink); font-size:1.0rem; font-weight:800; }
+.lb-stat span { color:var(--dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.4px; }
+.badge-chip { display:inline-flex; align-items:center; gap:5px; background:var(--bg-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; font-size:0.74rem; font-weight:700; color:var(--mid); }
+.badge-chip .bc-ic { font-size:0.82rem; color:var(--accent); }
+.badge-row { display:flex; flex-wrap:wrap; gap:7px; margin:10px 0; }
+.profile-head { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; background:var(--panel); border:1.5px solid var(--border); border-radius:18px; padding:22px; margin-bottom:18px; }
+.profile-role { font-size:0.9rem; color:var(--mid); font-weight:600; margin-top:2px; }
+.stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px; }
+.stat-box { background:var(--panel); border:1.5px solid var(--border); border-radius:14px; padding:14px 12px; text-align:center; }
+.stat-box .sb-n { font-size:1.4rem; font-weight:800; color:var(--ink); }
+.stat-box .sb-l { font-size:0.72rem; color:var(--mid); font-weight:600; margin-top:3px; }
+.aqlist-row { display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--panel); border:1.5px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
+.aqlist-title { font-weight:700; color:var(--ink); font-size:0.9rem; }
+.aqlist-meta { font-size:0.76rem; color:var(--mid); margin-top:2px; }
+.q-byline { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:2px 0 13px; }
+.qb-link { display:inline-flex; align-items:center; gap:8px; background:none; border:none; cursor:pointer; font-family:inherit; padding:0; }
+button.qb-link:hover .qb-name { color:var(--accent); }
+.qb-name { font-weight:700; color:var(--ink); font-size:0.82rem; }
+.qb-label { font-weight:600; color:var(--mid); }
+.q-byline .aq-cite { margin-left:auto; }
+.qb-rev { font-size:0.78rem; color:var(--mid); margin:10px 0 2px; }
+.qb-rev b { color:var(--ink); }
+.link-row { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
+.link-chip { display:inline-flex; align-items:center; gap:5px; background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:0.76rem; font-weight:600; color:var(--mid); }
+.follow-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.follow-count { font-size:0.85rem; color:var(--mid); }
+.follow-count b { color:var(--ink); font-weight:800; }
+.badge-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.badge-card { display:flex; align-items:flex-start; gap:12px; background:var(--panel); border:1.5px solid var(--border); border-radius:14px; padding:14px 16px; }
+.badge-card-ic { font-size:1.3rem; color:var(--accent); line-height:1.2; flex:none; }
+.badge-card-name { font-weight:800; color:var(--ink); font-size:0.9rem; }
+.badge-card-desc { font-size:0.8rem; color:var(--mid); margin-top:2px; line-height:1.45; }
+@media (max-width:640px){ .lb-row { grid-template-columns:24px 36px 1fr 56px; } .lb-row .lb-stat:nth-child(5),.lb-row .lb-stat:nth-child(6){ display:none; } .stat-grid{ grid-template-columns:repeat(2,1fr); } .badge-grid{ grid-template-columns:1fr; } }
+  .os-pre { background:var(--bg-2); border:1.5px solid var(--border); border-radius:9px; padding:13px 15px; white-space:pre-wrap; font-size:0.82rem; color:var(--ink-soft); }
+  .os-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  @media (max-width:600px){ .os-grid { grid-template-columns:1fr; } }
+
+  /* Learning pyramid + steps */
+  .climb-row { display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
+  .pyr-card { background:var(--panel); border:1.5px solid var(--border); border-radius:20px; padding:18px 16px 12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05); width:400px; max-width:100%; }
+  .pyr-svg { width:100%; height:auto; display:block; }
+  .pyr-tier { stroke:var(--accent-2); stroke-width:1.5; }
+  .pyr1 { fill:color-mix(in srgb,var(--accent-3) 18%,transparent); }
+  .pyr2 { fill:color-mix(in srgb,var(--accent-3) 34%,transparent); }
+  .pyr3 { fill:color-mix(in srgb,var(--accent-3) 52%,transparent); }
+  .pyr4 { fill:color-mix(in srgb,var(--accent-3) 74%,transparent); }
+  .pyr-label { fill:var(--ink-soft); font-size:11.5px; font-weight:800; }
+  .pyr-tick { stroke:var(--border); stroke-width:1.5; }
+  .pyr-side { fill:var(--accent); font-size:10px; font-weight:800; letter-spacing:.6px; }
+  .pyr-tl { font-size:12px; font-weight:800; }
+  .pyr-l12 { fill:var(--ink); } .pyr-l34 { fill:#ffffff; }
+  .pyr-cap-tri { fill:color-mix(in srgb,var(--accent-3) 88%,transparent); stroke:var(--accent-2); stroke-width:1.5; }
+  .pyr-mk { fill:var(--accent-2); } .pyr-mk-s { stroke:var(--accent-2); }
+  .pyr-cap { font-size:0.8rem; color:var(--dim); text-align:center; margin-top:6px; }
+  .climb-steps { flex:1; min-width:260px; display:flex; flex-direction:column; gap:12px; }
+  .step-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px; }
+  @media (max-width:680px){ .step-row { grid-template-columns:1fr; } }
+  .step-card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:15px 17px;
+    display:flex; gap:13px; align-items:flex-start; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
+  .step-n { width:30px; height:30px; flex-shrink:0; border-radius:9px; background:color-mix(in srgb,var(--accent-3) 18%,transparent);
+    color:var(--accent); font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .step-card h3 { font-size:0.96rem; color:var(--ink); margin-bottom:3px; font-weight:700; }
+  .step-card p { font-size:0.85rem; color:var(--mid); line-height:1.55; }
+  .contrib-callout { background:var(--panel); border:1.5px solid var(--border); border-radius:20px; padding:24px; margin-top:18px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+  .contrib-callout h3 { font-size:1.15rem; color:var(--ink); margin:4px 0 6px; font-weight:800; }
+  .contrib-callout p { color:var(--ink-soft); font-size:0.95rem; line-height:1.6; max-width:660px; }
+  .mini-steps { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0 4px; }
+  .mini-step { font-size:0.84rem; font-weight:700; color:var(--ink-soft); background:var(--bg-2); border:1px solid var(--border); border-radius:999px; padding:7px 13px; }
+  .mini-arrow { color:var(--accent-2); font-weight:800; }
+  .cite-example { margin-top:14px; background:var(--bg-2); border:1px solid var(--border); border-left:3px solid var(--accent-2); border-radius:0 10px 10px 0; padding:12px 15px; }
+  .cite-h { font-size:0.7rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
+  .cite-example code { font-family:ui-monospace,Menlo,monospace; font-size:0.82rem; color:var(--ink-soft); line-height:1.55; }
+  /* auth + landing + admin */
+  .signin-card { background:var(--panel); border:1.5px solid var(--border); border-radius:20px; padding:30px; box-shadow:var(--shadow); }
+  .g-btn { display:inline-flex; align-items:center; gap:8px; }
+  .g-note { font-weight:600; opacity:.7; font-size:0.78rem; }
+  .or { text-align:center; color:var(--dim); font-size:0.82rem; margin:14px 0; }
+  .demo-accts { margin-top:18px; border-top:1px solid var(--border-2); padding-top:14px; }
+  .demo-pick { display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; margin-top:8px; }
+  .usermenu { display:flex; align-items:center; gap:8px; white-space:nowrap; flex-shrink:0; }
+  .userchip { font-size:0.82rem; color:var(--ink-soft); font-weight:700; white-space:nowrap; }
+  .rolebadge { font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.4px; padding:2px 7px; border-radius:8px; }
+  .rolebadge.learner { color:var(--mid); background:var(--panel-2); border:1px solid var(--border); }
+  .rolebadge.contributor { color:var(--good); background:var(--good-deep); }
+  .rolebadge.admin { color:var(--accent); background:color-mix(in srgb,var(--accent-3) 14%,transparent); }
+  .wmintro { background:var(--panel); border:1.5px solid var(--border); border-left:3px solid var(--accent-2); border-radius:0 18px 18px 0; padding:20px 24px; margin-bottom:22px; }
+  .wmintro h2 { margin:6px 0; }
+  .example-cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+  @media (max-width:820px){ .example-cols { grid-template-columns:1fr; } }
+  .example-h { font-size:0.95rem; font-weight:800; color:var(--ink); margin-bottom:8px; }
+  .example-flow { max-width:720px; }
+  .flow-step-label { display:flex; align-items:center; gap:10px; font-size:1.02rem; font-weight:800; color:var(--ink); margin:8px 0 12px; }
+  .flow-step-n { width:26px; height:26px; flex-shrink:0; border-radius:8px; background:var(--accent-3); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:0.85rem; }
+  .flow-sub { font-size:0.85rem; color:var(--mid); font-weight:700; margin:16px 0 8px; }
+  .flow-arrow-down { text-align:center; color:var(--accent); font-weight:800; font-size:0.9rem; margin:22px 0 18px; }
+  .notice { background:var(--panel); border:1.5px solid var(--border); border-radius:18px; padding:26px; }
+  .notice.pending { border-left:3px solid var(--warn); }
+  .appq { background:var(--panel); border:1.5px solid var(--border); border-radius:16px; padding:16px; margin-bottom:12px; }
+
+  footer { border-top:1px solid var(--border-2); margin-top:40px; padding:26px 0; }
+  .foot-inner { max-width:1000px; margin:0 auto; padding:0 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .foot-left { font-size:0.82rem; color:var(--dim); } .foot-right { font-size:0.74rem; color:var(--border); font-weight:700; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ===================== shared helpers ===================== */
+const MODES = [
+  { key:"ms1", label:"MS1", sub:"Foundations", live:true },
+  { key:"ms2", label:"MS2", sub:"Integration", live:false },
+  { key:"ms3", label:"MS3", sub:"Clerkship", live:false },
+  { key:"ms4", label:"MS4", sub:"Boards", live:false },
+];
+const CATEGORY_ORDER = ["Cardiology","Pulmonology","Hematology"];
+function categoryOf(system){ const s=(system||"").toLowerCase();
+  if(s.includes("cardio"))return "Cardiology"; if(s.includes("hema"))return "Hematology";
+  if(s.includes("resp")||s.includes("pulmon")||s.includes("transport"))return "Pulmonology"; return "Other"; }
+function loadLS(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch(e){ return f; } }
+function saveLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function gradeAnswer(text,rubric){ const lower=text.toLowerCase();
+  return rubric.map(it=>({concept:it.concept, hit:it.keywords.some(kw=>lower.includes(kw.toLowerCase()))})); }
+
+/* ===================== board lint (the Forge gate) ===================== */
+const STOP=new Set("the a an of to in is are was were with and or for on at by from as has have had patient who which following most likely best explains shows this that these those".split(/\s+/));
+const w=s=>(s||"").toLowerCase().match(/[a-z][a-z\-]{1,}/g)||[];
+const cont=s=>w(s).filter(x=>x.length>3&&!STOP.has(x));
+const ch=s=>(s||"").trim().length;
+const fnum=s=>{const m=(s||"").replace(/,/g,"").match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null;};
+function boardLint(it){
+  const t=it.options||[],key=t[it.answerIndex]||"",d=t.filter((_,i)=>i!==it.answerIndex),lead=(it.leadIn||"").trim();
+  const f=[];
+  if(!/which of the following/i.test(lead)||!lead.endsWith("?")) f.push("lead-in form");
+  if(/which of the following (statements?|is true|is correct)/i.test(lead)) f.push("cover-the-options");
+  if(ch(key)>0&&d.length>0&&d.every(x=>ch(x)<ch(key))) f.push("key is longest");
+  if(t.some(x=>/\b(none|all|both) of the (above|following)\b/i.test(x))) f.push("none/all of above");
+  if(/\b(except|not|least)\b/i.test(lead)&&!/\bEXCEPT\b/.test(lead)) f.push("negative lead-in");
+  if(/[—–]/.test((it.vignette||"")+lead+t.join(" "))) f.push("em/en dash");
+  (()=>{const ss=new Set(cont((it.vignette||"")+" "+lead));const cl=cont(key).filter(x=>ss.has(x)&&!d.some(y=>w(y).includes(x)));if(cl.length) f.push("clang");})();
+  if(t.length<4||t.length>5) f.push("option count");
+  return {ok:f.length===0, fails:f};
+}
+function buildQuestions(){
+  const out=[];
+  (window.CASES||[]).filter(c=>c.active!==false&&c.ms1&&c.ms1.questions).forEach(c=>{
+    c.ms1.questions.forEach((q,i)=>{ if(!q.choices) return;
+      const it={id:c.id+"-"+(q.id||i),caseId:c.id,caseTitle:c.title,system:c.system,topic:c.topic,
+        vignette:(c.vignette||"").replace(/\s+/g," ").trim(),leadIn:q.stem,options:q.choices,answerIndex:q.correct,
+        explanation:q.feedback,source:"Ward Moments"};
+      it.lint=boardLint(it); out.push(it); });
+  });
+  return out;
+}
+
+/* ===================== Ward Moments components (Learn) ===================== */
+function Prompt({ prompt, value, onChange, onSave }){
+  const [results,setResults]=useState(null);
+  const grade=()=>{ if(!value.trim())return; setResults(gradeAnswer(value,prompt.rubric)); onSave&&onSave(); };
+  return (<div className="prompt-block">
+    <div className="prompt-q">{prompt.question}</div>
+    <textarea className="answer-textarea" placeholder={prompt.hint||"Answer in your own words…"} value={value}
+      onChange={e=>{onChange(e.target.value); setResults(null);}} onBlur={()=>value.trim()&&onSave&&onSave()} />
+    <button className="grade-btn" disabled={!value.trim()} onClick={grade}>Submit</button>
+    {results && (<div className="rubric"><div className="rubric-head">Key concepts</div>
+      {results.map((r,i)=>(<div key={i} className={"rubric-item "+(r.hit?"rubric-hit":"rubric-miss")}>
+        <span className="rubric-cdot" /><span>{r.concept}</span></div>))}</div>)}
+  </div>);
+}
+function WardMoment({ wm, answers, onChange, onSaveReason }){
+  return (<div className="ward">
+    <div className="ward-label"><span className="brand-dot" /> Ward Moment</div>
+    <div className="ward-scn">{wm.scenario}</div>
+    {wm.prompts.map(p=>(<Prompt key={p.id} prompt={p} value={answers[p.id]||""} onChange={v=>onChange(p.id,v)}
+      onSave={()=>{ if(p.id==="reason") onSaveReason(answers[p.id]||""); }} />))}
+    <div className="ward-why">💡 {wm.why}</div>
+  </div>);
+}
+const DEFAULT_FS = { title:"Frank-Starling curve", xLabel:"End-diastolic volume (preload) →", yLabel:"Stroke volume →",
+  paths:[ { d:"M50,196 C 85,150 100,80 140,62 C 200,40 280,40 350,40", label:"Normal contractility", lx:250, ly:34, muted:true },
+          { d:"M50,198 C 90,176 122,134 150,121 C 210,106 290,128 350,140", label:"Heart failure", lx:262, ly:160, muted:false } ] };
+function StarlingCurve({ compact=false, phase="interactive", curves="both", point=null, config=null }){
+  const cfg=config||DEFAULT_FS; const interactive=phase==="interactive";
+  const [sel,setSel]=useState("before"); const [anim,setAnim]=useState("before");
+  useEffect(()=>{ if(phase==="animate"){ setAnim("before"); const t=setTimeout(()=>setAnim("after"),450); return ()=>clearTimeout(t); } },[phase]);
+  const cur = phase==="none"?null : phase==="interactive"?sel : phase==="animate"?anim : phase;
+  const pts={ before:{x:320,y:138,edv:"very high",sv:"low",cong:"present"}, after:{x:150,y:121,edv:"reduced",sv:"improved",cong:"relieved"} };
+  const p = point?{x:point[0],y:point[1]} : (cur?pts[cur]:null);
+  const paths = curves==="normal"?cfg.paths.filter(pp=>pp.muted):cfg.paths;
+  return (<div className={"curve-wrap "+(compact?"compact":"")}>
+    {compact && <div className="curve-mini-label">{cfg.title}</div>}
+    {interactive && !point && (<div className="curve-toggle">
+      <button className={"curve-btn "+(sel==="before"?"on":"")} onClick={()=>setSel("before")}>Before diuresis</button>
+      <button className={"curve-btn "+(sel==="after"?"on":"")} onClick={()=>setSel("after")}>After furosemide</button></div>)}
+    <svg viewBox="0 0 380 250" className="curve-svg" role="img" aria-label={cfg.title}>
+      <line x1="50" y1="200" x2="352" y2="200" className="curve-axis" />
+      <line x1="50" y1="200" x2="50" y2="26" className="curve-axis" />
+      <text x="205" y="240" className="curve-axislabel" textAnchor="middle">{cfg.xLabel}</text>
+      <text x="16" y="118" className="curve-axislabel" textAnchor="middle" transform="rotate(-90 16 118)">{cfg.yLabel}</text>
+      {paths.map((pp,i)=>(<React.Fragment key={i}>
+        <path d={pp.d} className={pp.muted?"curve-normal":"curve-failing"} fill="none" />
+        <text x={pp.lx} y={pp.ly} className={pp.muted?"curve-label-normal":"curve-label-failing"}>{pp.label}</text></React.Fragment>))}
+      {p && <line x1={p.x} y1={p.y} x2={p.x} y2="200" className="curve-guide" />}
+      {p && <line x1={p.x} y1={p.y} x2="50" y2={p.y} className="curve-guide" />}
+      {p && (<g style={{transform:`translate(${p.x}px, ${p.y}px)`, transition:"transform .55s cubic-bezier(.4,0,.2,1)"}}><circle r="7" className="curve-dot" /></g>)}
+    </svg>
+    {p && !point && (<div className="curve-readout"><span><b>Preload:</b> {p.edv}</span><span><b>Stroke volume:</b> {p.sv}</span><span><b>Congestion:</b> {p.cong}</span></div>)}
+  </div>);
+}
+/* ===================== Anki export (copy a question as Front <Tab> Back) ===================== */
+const ankiLetter=i=>String.fromCharCode(65+i);
+function buildAnkiCard({ stem, choices, correct, explanation }){
+  const front=stem+"<br><br>"+choices.map((o,i)=>ankiLetter(i)+". "+o).join("<br>");
+  const back="Answer: "+ankiLetter(correct)+". "+choices[correct]+(explanation?"<br><br>"+explanation:"");
+  return { front, back };
+}
+function AnkiButton({ front, back, style }){
+  const [copied,setCopied]=useState(false);
+  const copy=()=>{ const clean=s=>String(s).replace(/[\t\r\n]+/g," ");
+    navigator.clipboard.writeText(clean(front)+"\t"+clean(back)); setCopied(true); setTimeout(()=>setCopied(false),9000); };
+  return (<span className="anki-wrap" style={style}>
+    <button className="anki-btn" onClick={copy}
+      title="Copies this question as one Anki card: the question is the Front, the answer and explanation are the Back, separated by a Tab.">
+      {copied?"Copied for Anki ✓":"⎘ Anki card"}</button>
+    {copied && (<span className="anki-help">Copied as <b>Front&nbsp;⇥&nbsp;Back</b>. To add it in Anki: paste into a blank text file and save it, then in Anki choose <b>File ▸ Import</b>, set note type to <b>Basic</b> and <b>Fields separated by: Tab</b>.</span>)}
+  </span>);
+}
+function Quiz({ questions, intro, onComplete }){
+  const [current,setCurrent]=useState(0); const [selected,setSelected]=useState(null);
+  const [submitted,setSubmitted]=useState(false); const [score,setScore]=useState(0); const blockRef=useRef(null);
+  const q=questions[current]; const total=questions.length;
+  const pct=((current+(submitted?1:0))/total)*100;
+  const reached=questions.slice(0,current+1).filter(qq=>!qq.placeholder).length - ((!q.placeholder&&!submitted)?1:0);
+  const submit=()=>{ if(selected===null)return; setSubmitted(true); if(selected===q.correct) setScore(s=>s+1); };
+  const next=()=>{ if(current+1>=total){ onComplete(); return; } setCurrent(c=>c+1); setSelected(null); setSubmitted(false); };
+  useEffect(()=>{ if(current>0&&blockRef.current) blockRef.current.scrollIntoView({behavior:"smooth",block:"start"}); },[current]);
+  useEffect(()=>{ const onKey=(e)=>{ if(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT")return;
+    if(q.placeholder){ if(e.key==="Enter"){ next(); e.preventDefault(); } return; }
+    if(!submitted){ const n=parseInt(e.key,10); if(q.choices&&n>=1&&n<=q.choices.length){ setSelected(n-1); e.preventDefault(); }
+      else if(e.key==="Enter"&&selected!==null){ submit(); e.preventDefault(); } }
+    else if(e.key==="Enter"){ next(); e.preventDefault(); } };
+    window.addEventListener("keydown",onKey); return ()=>window.removeEventListener("keydown",onKey); },[current,selected,submitted,q]);
+  return (<div>
+    <div className="prow"><span className="pill">Q {current+1} / {total}</span><span className="pill">Score {score} / {reached}</span>
+      <div className="pbar"><div className="pfill" style={{width:`${pct}%`}} /></div></div>
+    {intro && <p className="mode-intro">{intro}</p>}
+    <div className="qblock" ref={blockRef}>
+      <div className="qid">Question {q.id}
+        {submitted && !q.placeholder && <AnkiButton {...buildAnkiCard({stem:q.stem,choices:q.choices,correct:q.correct,explanation:q.feedback})} style={{float:"right"}} />}</div>
+      {q.placeholder ? (<div className="placeholder-q"><span className="inprog-badge">Coming soon</span>
+        <p style={{margin:"12px 0",color:"var(--mid)"}}>{q.topic}</p>
+        <button className="next-btn" onClick={next}>{current+1>=total?"See the mechanism →":"Next →"}</button></div>)
+      : (<><p className="qstem">{q.stem}</p>
+        {q.curve && <StarlingCurve compact {...(submitted?q.curve.post:q.curve.pre)} />}
+        <div className="choices">{q.choices.map((c,i)=>{ let cls="choice";
+          if(submitted){ if(i===q.correct)cls+=" correct"; else if(i===selected)cls+=" wrong"; } else if(i===selected)cls+=" selected";
+          return (<button key={i} className={cls} disabled={submitted} onClick={()=>setSelected(i)}>
+            <span className="choice-letter">{String.fromCharCode(65+i)}</span><span>{c}</span></button>); })}</div>
+        {!submitted && (<><button className="submit-btn" disabled={selected===null} onClick={submit}>Submit Answer</button>
+          <div className="kbd-hint">Tip: press {q.choices.length===5?"1 to 5":"1 to 4"} to choose, Enter to submit.</div></>)}
+        {submitted && (<div className={"feedback "+(selected!==q.correct?"bad":"")}>
+          <div className="fb-result" style={{color:selected===q.correct?"var(--good)":"var(--bad)"}}>{selected===q.correct?"✓ Correct":"✗ Not quite"}</div>
+          {q.feedback}<br /><button className="next-btn" onClick={next}>{current+1>=total?"See the mechanism →":"Next question →"}</button></div>)}
+      </>)}
+    </div>
+  </div>);
+}
+function MechanismReveal({ mechanism }){
+  const flow=mechanism.quickFlow||[]; const chain=mechanism.chain;
+  const [shownFlow,setShownFlow]=useState(1); const [shownChain,setShownChain]=useState(1);
+  return (<div className="reveal">
+    <div className="reveal-heading">Putting it all together</div>
+    <div className="reveal-title">The quick version</div>
+    {flow.length>0 && (<>
+      <div className="reveal-hint">(Click each box to reveal it.{mechanism.graphic?" The point on the curve moves with you.":""})</div>
+      <div className="mech-cols"><div className="mech-steps"><div className="flow">
+        {flow.map((n,i)=>{ const dim=i>=shownFlow; const arrowDim=(i+1)>=shownFlow;
+          return (<React.Fragment key={i}>
+            <div className={"flow-node "+(i===flow.length-1?"last ":"")+(dim?"dim":"")} onClick={()=>dim&&setShownFlow(i+1)}>{n}</div>
+            {i<flow.length-1 && <div className={"flow-arrow "+(arrowDim?"dim":"")}>→</div>}</React.Fragment>); })}</div>
+        {shownFlow<flow.length && <button className="reveal-next" onClick={()=>setShownFlow(c=>Math.min(c+1,flow.length))}>Reveal next →</button>}</div>
+        {mechanism.graphic && mechanism.quickPts && (<div className="mech-curve">
+          <StarlingCurve compact config={mechanism.graphic} point={mechanism.quickPts[Math.min(shownFlow,mechanism.quickPts.length)-1]} /></div>)}
+      </div></>)}
+    <div className="reveal-title" style={{marginTop:26}}>Step by step</div>
+    <div className="reveal-hint">(Click each step to reveal it.{mechanism.graphic?" The point on the curve moves with you.":""})</div>
+    <div className="mech-cols"><div className="mech-steps"><div className="chain">
+      {chain.map((step,i)=>{ const last=i===chain.length-1; const dim=i>=shownChain;
+        return (<div className={"chain-step "+(dim?"dim":"")} key={i} onClick={()=>dim&&setShownChain(i+1)}>
+          <div className="chain-left"><div className="chain-dot" />{!last && <div className="chain-line" />}</div>
+          <div className="chain-content"><div className="chain-label">{step.label}</div><div className="chain-detail">{step.detail}</div></div></div>); })}</div>
+      {shownChain<chain.length && <button className="reveal-next" onClick={()=>setShownChain(c=>Math.min(c+1,chain.length))}>Reveal next step →</button>}</div>
+      {mechanism.graphic && chain[0].pt && (<div className="mech-curve">
+        <StarlingCurve compact config={mechanism.graphic} point={chain[Math.min(shownChain,chain.length)-1].pt} /></div>)}
+    </div>
+    {mechanism.starlingText && (<><hr className="div" /><div className="starling">
+      <div className="starling-label">{mechanism.summaryLabel||"Frank-Starling: what this means"}</div><p>{mechanism.starlingText}</p></div></>)}
+    {mechanism.clinicalPearl && (<div className="pearl"><div className="pearl-label">⚡ Clinical Pearl</div><p>{mechanism.clinicalPearl}</p></div>)}
+    {mechanism.source && (<div className="mech-source">Reference: {mechanism.source}</div>)}
+  </div>);
+}
+function CaseView({ caseData, onBack, progress, setProgress, review, onToggleReview, answers, setAnswers, reasonAnswer, setReasonAnswer, onOpenAuthor }){
+  const [mode,setMode]=useState("ms1"); const [showReveal,setShowReveal]=useState(false); const [sessionKey,setSessionKey]=useState(0);
+  const revealRef=useRef(null); const modeMeta=MODES.find(m=>m.key===mode); const isRev=review.includes(caseData.id);
+  const switchMode=(m)=>{ if(m===mode)return; setMode(m); setShowReveal(false); setSessionKey(k=>k+1); };
+  const restart=()=>{ setShowReveal(false); setSessionKey(k=>k+1); };
+  const complete=()=>{ setShowReveal(true); setProgress(prev=>({...prev,[caseData.id]:{...(prev[caseData.id]||{}),[mode]:true}})); };
+  useEffect(()=>{ if(showReveal&&revealRef.current) revealRef.current.scrollIntoView({behavior:"smooth",block:"start"}); },[showReveal]);
+  return (<section className="section" style={{paddingTop:30}}><div className="wrap">
+    <button className="back-link" onClick={onBack}>← All cases</button>
+    <div className="case-rot">{caseData.wardMoment.rotation}</div>
+    <div className="case-title">{caseData.title}</div>
+    <div className="case-sub">{caseData.system} · {caseData.topic}</div>
+    <QByline att={attributionFor(caseData)} onOpenAuthor={onOpenAuthor} />
+    <WardMoment wm={caseData.wardMoment} answers={answers} onChange={(pid,v)=>setAnswers(caseData.id,pid,v)} onSaveReason={(txt)=>setReasonAnswer(caseData.id,txt)} />
+    <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{caseData.vignette}</div>
+    <div className="modes">{MODES.map(m=>(<button key={m.key} className={"mode-btn "+(mode===m.key?"active ":"")+(!m.live?"soon":"")} onClick={()=>switchMode(m.key)}>
+      <span className="mlabel">{m.label}</span><span className="msub">{m.sub}</span></button>))}</div>
+    {modeMeta.live ? (<>
+      <div key={sessionKey}>{!showReveal && caseData.ms1 && (<Quiz questions={caseData.ms1.questions} intro={caseData.ms1.intro} onComplete={complete} />)}</div>
+      {showReveal && (<><div ref={revealRef} style={{scrollMarginTop:78}}><MechanismReveal mechanism={caseData.mechanism} /></div>
+        <div className="case-actions"><button className="ghost-btn" onClick={restart}>↺ Restart</button>
+          <button className={"ghost-btn "+(isRev?"on":"")} onClick={()=>onToggleReview(caseData.id)}>{isRev?"★ Marked for review":"☆ Mark for review"}</button>
+          <button className="ghost-btn" onClick={onBack}>← All cases</button></div></>)}
+    </>) : (<div className="inprog"><div className="inprog-badge">In progress</div><h3>{modeMeta.label} · {modeMeta.sub}</h3>
+      <p>This tier is still being built. For now, work through <strong>MS1 · Foundations</strong>.</p></div>)}
+  </div></section>);
+}
+function WMLogo(){
+  return (<svg className="wm-logo" viewBox="0 0 32 28" width="28" height="24" role="img" aria-label="OpenStem">
+    <polygon points="16,3 23,15 9,15" fill="currentColor" opacity="0.5" />
+    <polygon points="9,15 23,15 28,25 4,25" fill="currentColor" /></svg>);
+}
+function Pyramid(){
+  return (<div className="pyr-card">
+    <svg viewBox="0 0 400 300" className="pyr-svg" role="img" aria-label="Learning pyramid from foundations to the wards and the boards">
+      <polygon className="pyr-tier pyr1" points="40,270 260,270 232.5,214 67.5,214" />
+      <polygon className="pyr-tier pyr2" points="67.5,214 232.5,214 205,158 95,158" />
+      <polygon className="pyr-tier pyr3" points="95,158 205,158 177.5,102 122.5,102" />
+      <polygon className="pyr-tier pyr4" points="122.5,102 177.5,102 150,46" />
+      <line x1="150" y1="46" x2="150" y2="30" className="pyr-mk-s" strokeWidth="2" />
+      <path d="M150,30 L168,35 L150,40 Z" className="pyr-mk" />
+      <line x1="247" y1="242" x2="272" y2="242" className="pyr-tick" /><text x="278" y="246" className="pyr-label" textAnchor="start">Foundations</text>
+      <line x1="220" y1="186" x2="272" y2="186" className="pyr-tick" /><text x="278" y="190" className="pyr-label" textAnchor="start">Mechanisms</text>
+      <line x1="193" y1="130" x2="272" y2="130" className="pyr-tick" /><text x="278" y="134" className="pyr-label" textAnchor="start">Clinical reasoning</text>
+      <line x1="165" y1="74" x2="272" y2="74" className="pyr-tick" /><text x="278" y="78" className="pyr-label" textAnchor="start">Wards &amp; boards</text>
+    </svg>
+    <div className="pyr-cap">Start at the base in Learn, then climb to wards and boards before exam day.</div>
+  </div>);
+}
+
+/* ===================== Practice card (board question, WM styling) ===================== */
+function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpenAuthor }){
+  const answered=picked!==undefined; const correct=answered&&picked===q.answerIndex;
+  const anki=buildAnkiCard({stem:q.vignette+"<br><br>"+q.leadIn, choices:q.options, correct:q.answerIndex, explanation:q.explanation});
+  const att=attributionFor(q);
+  return (<div className="qblock">
+    <div className="qid"><span className="os-badge src">{q.source}</span>{" "}
+      <span className={"os-badge "+(q.lint.ok?"ready":"polish")}>{q.lint.ok?"board-ready":"needs polish"}</span>
+      <span style={{color:"var(--mid)",fontWeight:700,letterSpacing:0,textTransform:"none",marginLeft:6}}>{q.system} · {q.topic}</span>
+      <AnkiButton front={anki.front} back={anki.back} style={{float:"right"}} /></div>
+    <QByline att={att} onOpenAuthor={onOpenAuthor} />
+    <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{q.vignette}</div>
+    <p className="qstem">{q.leadIn}</p>
+    <div className="choices">{q.options.map((o,i)=>{ let cls="choice";
+      if(answered){ if(i===q.answerIndex)cls+=" correct"; else if(i===picked)cls+=" wrong"; } else if(i===picked)cls+=" selected";
+      return (<button key={i} className={cls} disabled={answered} onClick={()=>!answered&&onPick(i)}>
+        <span className="choice-letter">{String.fromCharCode(65+i)}</span><span>{o}</span></button>); })}</div>
+    {answered && (<div className={"feedback "+(correct?"":"bad")}>
+      <div className="fb-result" style={{color:correct?"var(--good)":"var(--bad)"}}>{correct?"✓ Correct":"✗ Not quite"}</div>
+      {q.explanation}
+      <div className="qb-rev">Authored by <b>{att.author.name}</b>. Peer-reviewed by <b>{att.reviewers[0].name}</b> and <b>{att.reviewers[1].name}</b>.</div>
+      <div className="case-actions">
+        <span className="os-stars">{[1,2,3,4,5].map(n=><span key={n} onClick={()=>onRate(n)}>{n<=rated?<b>★</b>:"☆"}</span>)}</span>
+        {q.caseId && <button className="ghost-btn" onClick={onGoCase}>See the mechanism in Learn → {q.caseTitle}</button>}
+      </div></div>)}
+  </div>);
+}
+
+/* ===================== Accounts (mock auth) ===================== */
+const DEMO_USERS = {
+  "sam@med.school":      { name:"Sam (student)", email:"sam@med.school", role:"learner", app:{status:"none"} },
+  "rivera@stanford.edu": { name:"Dr. Rivera", email:"rivera@stanford.edu", role:"contributor", app:{status:"approved",training:"Cardiology fellow",institution:"Stanford"} },
+  "chen@stanford.edu":   { name:"Dr. Chen", email:"chen@stanford.edu", role:"contributor", app:{status:"approved",training:"IM resident (PGY-3)",institution:"Stanford"} },
+  "okafor@uci.edu":      { name:"Dr. Okafor", email:"okafor@uci.edu", role:"contributor", app:{status:"approved",training:"Hospitalist",institution:"UC Irvine"} },
+  "aaron@stanford.edu":  { name:"Aaron Frank, MD", email:"aaron@stanford.edu", role:"contributor", app:{status:"approved",training:"Hospitalist",institution:"Stanford"} },
+};
+const ADMIN_EMAILS = ["aaron@stanford.edu"];
+const TRAINING_LEVELS = ["Resident","Fellow","Attending","Other physician"];
+const blankDraft={level:"step1",system:"",vignette:"",leadIn:"",options:["","","","",""],answerIndex:0,explanation:""};
+
+function SignIn({ intent, users, onSignIn }){
+  const [name,setName]=useState(""); const [email,setEmail]=useState("");
+  return (<section className="section"><div className="wrap" style={{maxWidth:560}}>
+    <div className="signin-card">
+      <div className="kicker">{intent?("Sign in to "+intent):"Welcome"}</div>
+      <h2 className="h2" style={{marginBottom:8}}>Sign in to OpenStem</h2>
+      <p className="sec-lead" style={{marginTop:0}}>Learners get in instantly. To author or review questions, you apply to become a contributor after signing in.</p>
+      <button className="btn btn-primary g-btn" style={{marginTop:8}} onClick={()=>onSignIn("you@med.school","You")}>Continue with Google <span className="g-note">demo</span></button>
+      <div className="or">or use your name and email</div>
+      <input className="os-input" placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} />
+      <input className="os-input" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} style={{marginTop:8}} />
+      <button className="btn btn-primary" style={{marginTop:12}} disabled={!email.trim()} onClick={()=>onSignIn(email.trim().toLowerCase(),name.trim()||email.trim())}>Continue →</button>
+      <div className="demo-accts"><div className="cite-h">Demo accounts (one click, to try every role)</div>
+        {Object.values(users).map(u=>{ const role=ADMIN_EMAILS.includes(u.email)?"admin":((u.role==="contributor"&&u.app&&u.app.status==="approved")?"contributor":"learner");
+          return (<button key={u.email} className="ghost-btn demo-pick" onClick={()=>onSignIn(u.email,u.name)}><span>{u.name}</span><span className={"rolebadge "+role}>{role}</span></button>); })}
+      </div>
+    </div>
+  </div></section>);
+}
+function MiniQuestion({ q }){
+  const [sel,setSel]=useState(null); const [sub,setSub]=useState(false); if(!q) return null;
+  return (<div className="qblock">
+    <p className="qstem">{q.stem}</p>
+    <div className="choices">{q.choices.map((c,i)=>{ let cls="choice"; if(sub){ if(i===q.correct)cls+=" correct"; else if(i===sel)cls+=" wrong"; } else if(i===sel)cls+=" selected";
+      return (<button key={i} className={cls} disabled={sub} onClick={()=>setSel(i)}><span className="choice-letter">{String.fromCharCode(65+i)}</span><span>{c}</span></button>); })}</div>
+    {!sub && <button className="submit-btn" disabled={sel===null} onClick={()=>setSub(true)}>Submit</button>}
+    {sub && (<div className={"feedback "+(sel!==q.correct?"bad":"")}><div className="fb-result" style={{color:sel===q.correct?"var(--good)":"var(--bad)"}}>{sel===q.correct?"✓ Correct":"✗ Not quite"}</div>{q.feedback}</div>)}
+    {sub && <div style={{marginTop:10}}><AnkiButton {...buildAnkiCard({stem:q.stem,choices:q.choices,correct:q.correct,explanation:q.feedback})} /></div>}
+  </div>);
+}
+function LandingPractice({ q }){ const [p,setP]=useState(undefined); const [r,setR]=useState(0); if(!q) return null;
+  return <PracticeCard q={q} picked={p} onPick={i=>setP(i)} rated={r} onRate={setR} onGoCase={()=>{}} />; }
+function WardMomentIntro(){
+  return (<div className="wmintro"><div className="kicker">Why "ward moments"</div>
+    <h2 className="h2">Each case starts with a moment on the wards</h2>
+    <p className="sec-lead">A "ward moment" is the kind of question an attending asks on rounds. These exact scenarios come up during
+      your third- and fourth-year clerkships and throughout residency, depending on your specialty. Each case opens with that
+      moment, asks you to commit to an answer, then works back to the physiology behind it.</p></div>);
+}
+function ContributorApplication({ me, onApply }){
+  const [f,setF]=useState({ training:"Resident", institution:"", npi:"" });
+  if(me.app && me.app.status==="pending") return (<div className="notice pending"><div className="kicker">Application received</div>
+    <h2 className="h2">Thanks, {me.name}</h2>
+    <p className="sec-lead">Your contributor application is pending review. An editor will confirm your training level manually, usually within a day or two. You will get contributor access once approved.</p></div>);
+  return (<div className="qblock" style={{maxWidth:640}}>
+    <div className="kicker">Become a contributor</div>
+    <h2 className="h2" style={{marginBottom:6}}>Apply to author and review questions</h2>
+    <p className="sec-lead" style={{marginTop:0}}>Contributors are residents or above. Share a few details so an editor can confirm, then you can write and peer-review questions for citable credit.</p>
+    {me.app && me.app.status==="denied" && <div className="feedback bad" style={{marginBottom:12}}>A previous application was not approved. You can update your details and resubmit.</div>}
+    <div className="prompt-q" style={{margin:"10px 0 6px"}}>Training level</div>
+    <select className="os-input" value={f.training} onChange={e=>setF({...f,training:e.target.value})}>{TRAINING_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select>
+    <div className="prompt-q" style={{margin:"12px 0 6px"}}>Institution</div>
+    <input className="os-input" value={f.institution} onChange={e=>setF({...f,institution:e.target.value})} placeholder="e.g. Stanford Medicine" />
+    <div className="prompt-q" style={{margin:"12px 0 6px"}}>NPI number or a profile link (for verification)</div>
+    <input className="os-input" value={f.npi} onChange={e=>setF({...f,npi:e.target.value})} placeholder="NPI #, or an institutional / Doximity / LinkedIn URL" />
+    <p style={{fontSize:"0.8rem",color:"var(--dim)",marginTop:8}}>Used only to confirm you are a resident or above. An editor reviews it manually for now.</p>
+    <button className="btn btn-primary" style={{marginTop:14}} disabled={!f.institution.trim()||!f.npi.trim()} onClick={()=>onApply(f)}>Submit application</button>
+  </div>);
+}
+function AdminQueue({ users, onDecide }){
+  const pending=Object.values(users).filter(u=>u.app&&u.app.status==="pending");
+  return (<div>
+    <div className="banner">Manual confirmation for now: approve applicants who are residents or above. Check the training level, institution, and the NPI or profile link.</div>
+    {pending.length===0 ? <div className="inprog"><p>No pending applications. (Sign in as a new learner, apply from the Contribute tab, then come back here as admin to approve.)</p></div> :
+      pending.map(u=>(<div className="appq" key={u.email}>
+        <div style={{fontWeight:800,color:"var(--ink)"}}>{u.name} <span className="userchip">· {u.email}</span></div>
+        <div style={{fontSize:"0.88rem",color:"var(--mid)",margin:"6px 0"}}>{u.app.training} · {u.app.institution} · verify: {u.app.npi}</div>
+        <div className="case-actions"><button className="submit-btn" style={{marginTop:0,background:"var(--good)"}} onClick={()=>onDecide(u.email,"approve")}>Approve</button>
+          <button className="ghost-btn" onClick={()=>onDecide(u.email,"deny")}>Deny</button></div>
+      </div>))}
+  </div>);
+}
+function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLearn, onGoPractice }){
+  return (<>
+    <header className="hero"><div className="wrap">
+      <div className="hero-eyebrow">Clinical physiology, free for students</div>
+      <h1>Climb from the basics to <em>wards and boards</em>.</h1>
+      <p className="hero-sub">OpenStem pairs short teaching cases with board questions peer-reviewed by physicians, all on the same topics.
+        Understand the mechanism first in Learn, then test your recall in Practice.</p>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+        <button className="btn btn-primary" onClick={onGetStarted}>{signedIn?"Go to Learn →":"Get started →"}</button>
+        <button className="ghost-btn" onClick={onGoPractice}>Try practice questions</button></div>
+      <div className="hero-note">Written and reviewed by physicians. Physiology checked against current peer-reviewed research.</div>
+    </div></header>
+    <section className="section" style={{paddingBottom:8}}><div className="wrap">
+      <div className="sec-head"><div className="kicker">How it works</div><h2 className="h2">First learn, then practice</h2>
+        <p className="sec-lead">Learning builds in tiers. Start at the base in Learn, then climb through board questions in Practice until you are ready for wards and boards.</p></div>
+      <div className="climb-row"><Pyramid />
+        <div className="climb-steps">
+          <div className="step-card"><div className="step-n">1</div><div><h3>Learn the concept</h3><p>Open a case: predict the answer to a real rounds question, work the physiology, and see the mechanism with a graph.</p></div></div>
+          <div className="step-card"><div className="step-n">2</div><div><h3>Practice the questions</h3><p>Move to Practice for board-style questions on the same topics, with a full explanation after each.</p></div></div>
+          <div className="step-card"><div className="step-n">3</div><div><h3>Reinforce and retain</h3><p>Missed questions return through spaced repetition, the retrieval practice that moves knowledge into long-term memory.</p></div></div>
+        </div>
+      </div>
+    </div></section>
+    <section className="section" style={{paddingTop:8}}><div className="wrap">
+      <div className="sec-head"><div className="kicker">Quality</div><h2 className="h2">How the questions are made</h2>
+        <p className="sec-lead">Every question is written by a physician and independently peer-reviewed by two more before it is selected into the bank, the same one-best-answer standard used on board exams.</p></div>
+      <div className="step-row">
+        <div className="step-card"><div className="step-n">1</div><div><h3>Written by physicians</h3><p>A physician or resident drafts each question and runs it through an automated quality gate for board item-writing rules.</p></div></div>
+        <div className="step-card"><div className="step-n">2</div><div><h3>Peer-reviewed twice</h3><p>Two independent physicians review the item for accuracy and fairness before it can be published.</p></div></div>
+        <div className="step-card"><div className="step-n">3</div><div><h3>Selected and published</h3><p>Approved questions are selected into the bank, and learners can rate their quality over time.</p></div></div>
+      </div>
+      <div className="contrib-callout"><div className="kicker">Contribute</div>
+        <h3>Write a question, earn a citable publication</h3>
+        <p>Physicians and residents can author and review questions. Each accepted item becomes a peer-reviewed, citable micro-publication with a stable identifier, credit you can list on a CV.</p>
+        <div className="mini-steps"><span className="mini-step">1 · Write it</span><span className="mini-arrow">→</span><span className="mini-step">2 · Peer-reviewed by two physicians</span><span className="mini-arrow">→</span><span className="mini-step">3 · Published and citable</span></div>
+        <div className="cite-example"><div className="cite-h">Example citation</div><code>Rivera A. Decompensated heart failure and the Frank-Starling relationship. OpenStem Board Question Commons, 2026; OS-2026-0007. Peer-reviewed by Chen M, Okafor T.</code></div>
+      </div>
+    </div></section>
+    <section className="section" style={{paddingTop:8}}><div className="wrap">
+      <div className="sec-head"><div className="kicker">See it in action</div><h2 className="h2">One topic, from wards to boards</h2>
+        <p className="sec-lead">Follow heart failure end to end: first understand the mechanism in Learn, then test recall with a board question in Practice.</p></div>
+      <div className="example-flow">
+        <div className="flow-step-label"><span className="flow-step-n">1</span> In Learn, it starts with a ward moment</div>
+        {exampleCase && (<div className="ward"><div className="ward-label"><span className="brand-dot" /> Ward Moment</div>
+          <div className="ward-scn">{exampleCase.wardMoment.scenario}</div>
+          <div className="ward-why">💡 A "ward moment" is the kind of question an attending actually asks on rounds. You meet these on your clerkships and in residency, so each case starts there, then works back to the physiology.</div></div>)}
+        <div className="flow-sub">Then work the mechanism on an interactive graph</div>
+        <StarlingCurve compact />
+        <div className="flow-sub">...and predict the answer to the ward moment</div>
+        {exampleCase && <MiniQuestion q={exampleCase.ms1.questions[0]} />}
+        <div style={{marginTop:14}}><button className="ghost-btn" onClick={onGoLearn}>Open the full case in Learn →</button></div>
+        <div className="flow-arrow-down">↓  then test recall on the same topic</div>
+        <div className="flow-step-label"><span className="flow-step-n">2</span> In Practice, a board-style question</div>
+        <LandingPractice q={examplePractice} />
+        <div style={{marginTop:14}}><button className="ghost-btn" onClick={onGoPractice}>More questions in Practice →</button></div>
+      </div>
+    </div></section>
+  </>);
+}
+
+/* ===================== App ===================== */
+/* ===================== Authors / community (credit layer) ===================== */
+const COMMUNITY_AUTHORS = [
+  { id:"rivera", name:"Dr. Ana Rivera", creds:"MD", role:"Cardiology Fellow", institution:"Stanford Medicine", color:"#3b82f6", initials:"AR", photo:null, followers:312, orcid:"0000-0002-1825-0097",
+    published:24, reviews:38, stars:4.8, joined:"Jan 2026",
+    badges:[["★","Founding author"],["▲","Top author"],["✚","25 published"],["✦","Five-star author"]],
+    bio:"Cardiology fellow who built most of the cardiovascular physiology set.",
+    qs:[["Frank-Starling in decompensated heart failure","Cardiology",4.9,"OS-2026-0007"],["Coronary perfusion in diastole","Cardiology",4.7,"OS-2026-0012"],["Aortic stenosis and exertional syncope","Cardiology",4.8,"OS-2026-0018"]] },
+  { id:"chen", name:"Dr. Marcus Chen", creds:"MD", role:"Internal Medicine Resident, PGY-3", institution:"Stanford Medicine", color:"#8b5cf6", initials:"MC", photo:null, followers:408, orcid:"0000-0001-5109-3700",
+    published:17, reviews:52, stars:4.9, joined:"Jan 2026",
+    badges:[["✓","Top reviewer"],["★","Founding author"],["◆","Editors' pick"],["✦","Five-star author"]],
+    bio:"Internal medicine resident; reviews more questions than anyone on the platform.",
+    qs:[["Hyperkalemia and the resting membrane potential","Cardiology",4.9,"OS-2026-0021"],["V/Q mismatch in pneumonia","Pulmonology",4.8,"OS-2026-0024"]] },
+  { id:"okafor", name:"Dr. Tomi Okafor", creds:"MD", role:"Hospitalist", institution:"UC Irvine", color:"#10b981", initials:"TO", photo:null, followers:156, orcid:"0000-0003-4180-1234",
+    published:12, reviews:20, stars:4.7, joined:"Feb 2026",
+    badges:[["▲","Rising author"],["✚","10 published"]],
+    bio:"Hospitalist focused on the hematology and acid-base sets.",
+    qs:[["Iron-deficiency anemia: small, pale cells","Hematology",4.7,"OS-2026-0028"],["B12 deficiency and macrocytosis","Hematology",4.6,"OS-2026-0031"]] },
+  { id:"patel", name:"Dr. Sana Patel", creds:"MD, MPH", role:"Nephrology Fellow", institution:"UCSF", color:"#f59e0b", initials:"SP", photo:null, followers:74, orcid:"0000-0002-7898-5678",
+    published:9, reviews:14, stars:4.6, joined:"Mar 2026",
+    badges:[["▲","Rising author"]],
+    bio:"Nephrology fellow writing the renal and electrolyte questions.",
+    qs:[["Anemia of chronic kidney disease","Hematology",4.6,"OS-2026-0034"]] },
+];
+const BADGE_CATALOG = [
+  ["★","Founding author","One of the first physicians to publish on the platform."],
+  ["▲","Rising author","Your first question is published and live to learners."],
+  ["✚","Milestones","Awarded at 10, 25, and 50 published questions."],
+  ["✓","Top reviewer","Earned after 25 careful peer reviews of others' items."],
+  ["◆","Editors' pick","An item chosen as an exemplar for the question bank."],
+  ["✦","Five-star author","An average learner rating of 4.8 or higher across 10 or more items."],
+];
+function attributionFor(q){
+  const byId=k=>COMMUNITY_AUTHORS.find(a=>a.id===k); const sys=(q&&q.system)||"";
+  let aid="patel"; if(/cardi/i.test(sys)) aid="rivera"; else if(/hema/i.test(sys)) aid="okafor"; else if(/resp|pulm/i.test(sys)) aid="chen";
+  const author=byId(aid)||COMMUNITY_AUTHORS[0]; const others=COMMUNITY_AUTHORS.filter(a=>a.id!==author.id);
+  return { author, reviewers:[others[0],others[1]] };
+}
+function AuAvatar({ a, size=44 }){
+  const [err,setErr]=useState(false);
+  if(a.photo && !err) return (<img className="avatar" src={a.photo} alt={a.name} onError={()=>setErr(true)} style={{width:size,height:size,minWidth:size,objectFit:"cover",background:a.color}} />);
+  return (<span className="avatar" style={{width:size,height:size,minWidth:size,background:a.color,fontSize:Math.round(size*0.38)}}>{a.initials}</span>);
+}
+function AuBadge({ icon, label }){ return (<span className="badge-chip"><span className="bc-ic">{icon}</span>{label}</span>); }
+function AuVerify(){ return (<span className="verify-badge"><span className="vb-check">✓</span>Peer-reviewed</span>); }
+function QByline({ att, onOpenAuthor, cite }){
+  const a=att.author; const inner=(<><AuAvatar a={a} size={26} /><span className="qb-name"><span className="qb-label">Question author: </span>{a.name}, {a.creds}</span></>);
+  return (<div className="q-byline">
+    {onOpenAuthor ? <button className="qb-link" onClick={()=>onOpenAuthor(a)}>{inner}</button> : <span className="qb-link">{inner}</span>}
+    <AuVerify />
+    {cite && <span className="aq-cite">{cite}</span>}
+  </div>);
+}
+function AuByline({ a, onOpen, size=46 }){
+  return (<button className="author-byline" onClick={onOpen}>
+    <AuAvatar a={a} size={size} />
+    <span className="ab-text"><span className="ab-name">{a.name} <span className="ab-cred">{a.creds}</span></span>
+      <span className="ab-role">{a.role} · {a.institution}</span></span></button>);
+}
+function AuQuestion({ author, reviewers, onOpenAuthor }){
+  return (<div className="aq-card">
+    <QByline att={{author}} onOpenAuthor={onOpenAuthor} cite={author.qs[0][3]} />
+    <div className="vignette"><div className="vignette-label">Clinical Vignette</div>A 68-year-old patient with ischemic cardiomyopathy is admitted with worsening dyspnea on exertion. Examination shows distended neck veins, bibasilar crackles, and 2+ pitting edema. The left ventricular ejection fraction is 30 percent (reduced), and the patient is given furosemide.</div>
+    <p className="qstem">Which of the following best explains the change in stroke volume after furosemide is given?</p>
+    <div className="choices">
+      <button className="choice" disabled><span className="choice-letter">A</span><span>Stroke volume rises. Lower filling moves the ventricle onto the ascending portion of the curve.</span></button>
+      <button className="choice" disabled><span className="choice-letter">B</span><span>Stroke volume rises. The diuretic raises contractility and lifts the entire curve.</span></button>
+      <button className="choice" disabled><span className="choice-letter">C</span><span>Stroke volume falls. Reducing preload lowers output even on a depressed curve.</span></button>
+    </div>
+    <div className="aq-foot">
+      <span>Peer-reviewed by <b>{reviewers[0].name}</b> and <b>{reviewers[1].name}</b></span>
+    </div>
+  </div>);
+}
+function AuthorProfile({ a, onBack }){
+  const [following,setFollowing]=useState(false);
+  return (<div>
+    <button className="ghost-btn" onClick={onBack} style={{marginBottom:14}}>← All authors</button>
+    <div className="profile-head">
+      <AuAvatar a={a} size={96} />
+      <div style={{flex:1,minWidth:240}}>
+        <h2 className="h2" style={{margin:0}}>{a.name} <span className="ab-cred" style={{fontSize:"1rem"}}>{a.creds}</span></h2>
+        <div className="profile-role">{a.role} · {a.institution}</div>
+        <div className="badge-row">{a.badges.map((b,i)=><AuBadge key={i} icon={b[0]} label={b[1]} />)}</div>
+        <p style={{color:"var(--mid)",fontSize:"0.9rem",margin:"4px 0 10px"}}>{a.bio}</p>
+        <div className="link-row">
+          <span className="link-chip">🏛 {a.institution}</span>
+          <span className="link-chip">ORCID {a.orcid}</span>
+          <span className="link-chip">Doximity</span>
+        </div>
+        <div className="follow-row">
+          <button className={"btn "+(following?"ghost-btn":"btn-primary")} onClick={()=>setFollowing(f=>!f)}>{following?"✓ Following":"＋ Follow"}</button>
+          <span className="follow-count"><b>{a.followers+(following?1:0)}</b> followers</span>
+        </div>
+      </div>
+    </div>
+    <div className="stat-grid">
+      <div className="stat-box"><div className="sb-n">{a.published}</div><div className="sb-l">Questions published</div></div>
+      <div className="stat-box"><div className="sb-n">{a.reviews}</div><div className="sb-l">Peer reviews given</div></div>
+      <div className="stat-box"><div className="sb-n">{a.joined}</div><div className="sb-l">Contributing since</div></div>
+    </div>
+    <div className="sec-head" style={{textAlign:"left",marginBottom:10}}><h3 className="h2" style={{fontSize:"1.1rem",margin:0}}>Latest published questions</h3></div>
+    {a.qs.map((q,i)=>(<div className="aqlist-row" key={i}>
+      <div><div className="aqlist-title">{q[0]}</div><div className="aqlist-meta">{q[1]} · {q[3]} · <span className="verify-mini">✓ peer-reviewed</span></div></div></div>))}
+  </div>);
+}
+function AuthorsView({ sel, setSel }){
+  useEffect(()=>{ window.scrollTo({top:0,left:0,behavior:"auto"}); },[sel]);
+  const sorted=[...COMMUNITY_AUTHORS].sort((x,y)=>y.published-x.published);
+  if(sel) return (<section className="section" style={{paddingTop:34}}><div className="wrap" style={{maxWidth:760}}><AuthorProfile a={sel} onBack={()=>setSel(null)} /></div></section>);
+  return (<section className="section" style={{paddingTop:34}}><div className="wrap" style={{maxWidth:820}}>
+    <div className="sec-head"><div className="kicker">Authors</div><h2 className="h2">Credit where it is due</h2>
+      <p className="sec-lead">Every question carries its author and the two physicians who peer-reviewed it. The contributors are residents and junior faculty, and each published item is a citable line on a CV with your name on it for good.</p></div>
+    <div className="author-hero">
+      <div className="kicker" style={{marginBottom:10}}>What a published question looks like</div>
+      <AuQuestion author={COMMUNITY_AUTHORS[0]} reviewers={[COMMUNITY_AUTHORS[1],COMMUNITY_AUTHORS[2]]} onOpenAuthor={setSel} />
+    </div>
+    <div className="sec-head"><div className="kicker">Leaderboard</div><h2 className="h2">Top authors</h2>
+      <p className="sec-lead">Ranked by questions published and peer reviews. Open an author to see their page and follow them, so a new question from a writer you trust finds you.</p></div>
+    <div className="lb">{sorted.map((a,i)=>(<button className="lb-row" key={a.id} onClick={()=>setSel(a)}>
+      <span className="lb-rank">{i+1}</span><AuAvatar a={a} size={40} />
+      <span className="lb-name">{a.name} <span className="ab-cred">{a.creds}</span><br /><span className="lb-sub">{a.role} · {a.institution}</span></span>
+      <span className="lb-stat"><b>{a.published}</b><span>published</span></span>
+      <span className="lb-stat"><b>{a.reviews}</b><span>reviews</span></span>
+    </button>))}</div>
+    <div className="sec-head" style={{marginTop:38}}><div className="kicker">How you earn credit</div><h2 className="h2">Badges</h2>
+      <p className="sec-lead">Recognition for writing and reviewing. Badges show on your profile and next to your name across the site.</p></div>
+    <div className="badge-grid">{BADGE_CATALOG.map((b,i)=>(<div className="badge-card" key={i}>
+      <span className="badge-card-ic">{b[0]}</span>
+      <div><div className="badge-card-name">{b[1]}</div><div className="badge-card-desc">{b[2]}</div></div></div>))}</div>
+  </div></section>);
+}
+function App(){
+  const [theme,setTheme]=useState(()=>loadLS("os_theme","dark"));
+  const [auth,setAuth]=useState(()=>loadLS("os_auth",{ currentEmail:null, users:JSON.parse(JSON.stringify(DEMO_USERS)) }));
+  const [mode,setMode]=useState("home");
+  const [authorSel,setAuthorSel]=useState(null);
+  const openAuthor=a=>{ setAuthorSel(a); setMode("authors"); };
+  const [activeId,setActiveId]=useState(null);
+  const [progress,setProgressRaw]=useState(()=>loadLS("os_progress",{}));
+  const [review,setReview]=useState(()=>loadLS("os_review",[]));
+  const [answers,setAnswersRaw]=useState(()=>loadLS("os_answers",{}));
+  const [reasons,setReasonsRaw]=useState(()=>loadLS("os_reasons",{}));
+  const [psub,setPsub]=useState("bank"); const [pcat,setPcat]=useState("All");
+  const [pst,setPst]=useState(()=>loadLS("os_practice",{att:{},rate:{}})); const [picks,setPicks]=useState({});
+  const [boardQS,setBoardQS]=useState(()=>buildQuestions());
+  useEffect(()=>{ fetch("questions.board.json?v=4").then(r=>r.json()).then(arr=>{
+    const mapped=(arr||[]).map((q,i)=>{ const it={id:q.caseId+"-"+q.origQuestionId+"-b",caseId:q.caseId,caseTitle:q.caseTitle,
+      system:q.system,topic:q.topic,vignette:q.vignette,leadIn:q.leadIn,options:q.options,answerIndex:q.answerIndex,
+      explanation:q.explanation,source:"Forge",citableId:"OS-2026-"+String(i+1).padStart(4,"0")}; it.lint=boardLint(it); return it; });
+    if(mapped.length) setBoardQS(mapped); }).catch(()=>{}); },[]);
+  const [contrib,setContrib]=useState(()=>loadLS("os_contrib",{qs:[],counter:100}));
+  const [csub,setCsub]=useState("author"); const [draft,setDraft]=useState(blankDraft); const [audit,setAudit]=useState(null);
+
+  useEffect(()=>{ document.documentElement.setAttribute("data-theme",theme); saveLS("os_theme",theme); },[theme]);
+  useEffect(()=>{ if("scrollRestoration" in history) history.scrollRestoration="manual"; },[]);
+  useEffect(()=>{ window.scrollTo({top:0,left:0,behavior:"auto"}); },[mode,activeId,psub,csub]);
+  useEffect(()=>saveLS("os_practice",pst),[pst]);
+  useEffect(()=>saveLS("os_contrib",contrib),[contrib]);
+  useEffect(()=>saveLS("os_auth",auth),[auth]);
+
+  // ---- auth ----
+  const me = auth.currentEmail ? auth.users[auth.currentEmail] : null;
+  const isAdmin = me && ADMIN_EMAILS.includes(me.email);
+  const isContributor = me && me.role==="contributor" && me.app && me.app.status==="approved";
+  const userName = email => (auth.users[email]||{}).name || email || "OpenStem editorial";
+  const signIn = (email,name)=>setAuth(a=>{ const u={...a.users}; if(!u[email]) u[email]={name:name||email,email,role:"learner",app:{status:"none"}}; return {...a,users:u,currentEmail:email}; });
+  const signOut = ()=>{ setAuth(a=>({...a,currentEmail:null})); setMode("home"); };
+  const applyContributor = form=>setAuth(a=>{ const u={...a.users}; const cur=u[a.currentEmail]; u[a.currentEmail]={...cur,app:{status:"pending",...form}}; return {...a,users:u}; });
+  const decideApp = (email,decision)=>setAuth(a=>{ const u={...a.users}; const usr=u[email]; if(!usr)return a;
+    u[email]= decision==="approve" ? {...usr,role:"contributor",app:{...usr.app,status:"approved"}} : {...usr,app:{...usr.app,status:"denied"}}; return {...a,users:u}; });
+
+  const cases=(window.CASES||[]).filter(c=>c.active!==false);
+  const setProgress=u=>setProgressRaw(prev=>{ const np=typeof u==="function"?u(prev):u; saveLS("os_progress",np); return np; });
+  const toggleReview=id=>setReview(prev=>{ const np=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]; saveLS("os_review",np); return np; });
+  const setAnswers=(id,pid,v)=>setAnswersRaw(prev=>{ const np={...prev,[id]:{...(prev[id]||{}),[pid]:v}}; saveLS("os_answers",np); return np; });
+  const setReasonAnswer=(id,txt)=>setReasonsRaw(prev=>{ const np={...prev,[id]:txt}; saveLS("os_reasons",np); return np; });
+  const openCase=id=>{ setActiveId(id); setMode("learn"); };
+  const goHome=()=>{ setMode("home"); setActiveId(null); };
+  const goCase=id=>{ setMode("learn"); setActiveId(id); };
+  const caseData=cases.find(c=>c.id===activeId);
+
+  const pubContrib=contrib.qs.filter(q=>q.status==="published").map(q=>{ const it={...q,source:"Community"}; it.lint=boardLint(it); return it; });
+  const QS=[...boardQS,...pubContrib];
+  const caseCount=new Set(boardQS.map(q=>q.caseId)).size; const ready=QS.filter(q=>q.lint.ok).length;
+  const lastAtt=qid=>{ const a=pst.att[qid]||[]; return a.length?a[a.length-1]:null; };
+  const due=QS.filter(q=>{ const l=lastAtt(q.id); return l&&!l.correct; });
+  const bankCats=(()=>{ const pr=[]; CATEGORY_ORDER.forEach(k=>{ if(QS.some(q=>categoryOf(q.system)===k)) pr.push(k); });
+    QS.forEach(q=>{ const k=categoryOf(q.system); if(!pr.includes(k)) pr.push(k); }); return ["All",...pr]; })();
+  const bankList = pcat==="All"?QS:QS.filter(q=>categoryOf(q.system)===pcat);
+  const pick=(qid,i,correct)=>{ setPicks(s=>({...s,[qid]:i})); if(me) setPst(s=>{ const att={...s.att}; att[qid]=[...(att[qid]||[]),{correct}]; return {...s,att}; }); };
+  const rate=(qid,n)=>setPst(s=>({...s,rate:{...s.rate,[qid]:n}}));
+  const updateC=fn=>setContrib(s=>{ const c=JSON.parse(JSON.stringify(s)); fn(c); return c; });
+  const submitDraft=()=>{ const a=boardLint(draft); setAudit(a); if(!a.ok)return;
+    updateC(c=>{ c.qs.push({id:"c"+Date.now(),citableId:null,status:"in_review",caseId:null,caseTitle:null,...JSON.parse(JSON.stringify(draft)),authorId:me.email,reviews:[]}); });
+    setDraft(blankDraft); setAudit(null); setCsub("review"); };
+  const reviewItem=(qid,decision)=>updateC(c=>{ const q=c.qs.find(x=>x.id===qid); q.reviews.push({reviewerId:me.email,decision});
+    const ap=q.reviews.filter(r=>r.decision==="approve").length;
+    if(decision==="reject") q.status="rejected"; else if(ap>=2){ q.status="published"; c.counter+=1; q.citableId="OS-2026-"+String(c.counter).padStart(4,"0"); } });
+
+  const PracticeBank=({list,empty})=> (<div>
+    {list.length===0 ? <div className="inprog">{empty}</div> :
+      list.map(q=><PracticeCard key={q.id} q={q} picked={picks[q.id]} onPick={i=>pick(q.id,i,i===q.answerIndex)}
+        rated={pst.rate[q.id]||0} onRate={n=>rate(q.id,n)} onGoCase={()=>goCase(q.caseId)} onOpenAuthor={openAuthor} />)}
+  </div>);
+
+  const PracticeView=()=> (<section className="section" style={{paddingTop:34}}><div className="wrap">
+    <div className="sec-head"><div className="kicker">Practice · board questions</div><h2 className="h2">Practice on the same topics</h2>
+      <p className="sec-lead">New to a topic? Start in Learn, then return here to test yourself.</p></div>
+    <div className="cat-tabs">
+      <button className={"cat-tab "+(psub==="bank"?"active":"")} onClick={()=>setPsub("bank")}>Question bank<span className="cat-count">{QS.length}</span></button>
+      <button className={"cat-tab "+(psub==="srq"?"active":"")} onClick={()=>{ setPsub("srq"); setPicks({}); }}>Spaced review<span className="cat-count">{due.length}</span></button>
+      <button className={"cat-tab "+(psub==="prog"?"active":"")} onClick={()=>setPsub("prog")}>My progress</button>
+    </div>
+    {psub==="bank" && (<>
+      <div className="banner">{boardQS.length} board questions written from {caseCount} Ward Moments cases and run through the Forge gate{pubContrib.length?(", plus "+pubContrib.length+" community-published"):""}. {ready} of {QS.length} pass every hard board-exam check. Each links back to its case in Learn.</div>
+      <div className="cat-tabs">{bankCats.map(t=>{ const count=t==="All"?QS.length:QS.filter(q=>categoryOf(q.system)===t).length;
+        return (<button key={t} className={"cat-tab "+(pcat===t?"active":"")} onClick={()=>setPcat(t)}>{t==="All"?"All topics":t}<span className="cat-count">{count}</span></button>); })}</div>
+      <PracticeBank list={bankList} empty={<p>No questions in this category yet.</p>} />
+    </>)}
+    {psub==="srq" && (<>
+      <div className="banner">Questions you miss come back here until you get them right. {due.length} due now.</div>
+      <PracticeBank list={due} empty={<p>Nothing due. Miss a few in the question bank and they will queue up here.</p>} />
+    </>)}
+    {psub==="prog" && (()=>{
+      const atts=[]; QS.forEach(q=>(pst.att[q.id]||[]).forEach(a=>atts.push({...a,system:q.system})));
+      const seen=new Set(); QS.forEach(q=>{ if((pst.att[q.id]||[]).length) seen.add(q.id); });
+      const total=atts.length,correct=atts.filter(a=>a.correct).length,acc=total?Math.round(100*correct/total):0;
+      const bySys={}; atts.forEach(a=>{ (bySys[a.system]=bySys[a.system]||{c:0,t:0}).t++; if(a.correct)bySys[a.system].c++; });
+      return (<div><div className="how-grid" style={{marginBottom:18}}>
+        <div className="how-card"><div style={{fontSize:"0.8rem",color:"var(--mid)"}}>Questions seen</div><div className="stat-num">{seen.size}</div></div>
+        <div className="how-card"><div style={{fontSize:"0.8rem",color:"var(--mid)"}}>Total answers</div><div className="stat-num">{total}</div></div>
+        <div className="how-card"><div style={{fontSize:"0.8rem",color:"var(--mid)"}}>Accuracy</div><div className={"stat-num "+(acc>=70?"good":"warn")}>{acc}%</div></div>
+        <div className="how-card"><div style={{fontSize:"0.8rem",color:"var(--mid)"}}>Due for review</div><div className={"stat-num "+(due.length?"warn":"good")}>{due.length}</div></div>
+      </div>
+      <div className="qblock"><div className="reveal-title">Accuracy by system</div>
+        {Object.keys(bySys).length===0 ? <p style={{color:"var(--dim)",marginTop:8}}>Answer some questions to see your breakdown.</p> :
+          Object.entries(bySys).map(([s,v])=>{ const pc=Math.round(100*v.c/v.t); return (<div key={s} style={{margin:"10px 0"}}>
+            <div style={{fontSize:"0.85rem",color:"var(--mid)",marginBottom:5}}>{s} — {v.c}/{v.t} ({pc}%)</div>
+            <div className="os-bar"><div style={{width:pc+"%"}} /></div></div>); })}</div>
+      </div>);
+    })()}
+  </div></section>);
+
+  const ContributeWorkspace=()=> (<section className="section" style={{paddingTop:34}}><div className="wrap">
+    <div className="sec-head"><div className="kicker">Contribute · {me.name}</div><h2 className="h2">Author and peer-review board questions</h2></div>
+    <div className="step-row">
+      <div className="step-card"><div className="step-n">1</div><div><h3>Write it</h3><p>You draft a question; the Forge quality gate checks it against board item-writing rules.</p></div></div>
+      <div className="step-card"><div className="step-n">2</div><div><h3>Peer reviewed</h3><p>Two independent physicians review the item and approve it, request changes, or reject it.</p></div></div>
+      <div className="step-card"><div className="step-n">3</div><div><h3>Selected &amp; published</h3><p>Approved questions are selected into the Practice bank with a citable ID. Learners then rate their quality.</p></div></div>
+    </div>
+    <div className="banner">To play out the two-reviewer flow, sign in as different contributors (use the demo accounts): author as one, then approve as two others.</div>
+    <div className="cat-tabs">
+      <button className={"cat-tab "+(csub==="author"?"active":"")} onClick={()=>setCsub("author")}>Write a question</button>
+      <button className={"cat-tab "+(csub==="review"?"active":"")} onClick={()=>setCsub("review")}>Review queue<span className="cat-count">{contrib.qs.filter(q=>q.status==="in_review").length}</span></button>
+      <button className={"cat-tab "+(csub==="cv"?"active":"")} onClick={()=>setCsub("cv")}>Contribution record</button>
+    </div>
+    {csub==="author" && (<div className="qblock">
+      <div className="os-grid" style={{marginBottom:12}}>
+        <div><div className="prompt-q" style={{marginBottom:6}}>Exam level</div>
+          <select className="os-input" value={draft.level} onChange={e=>setDraft({...draft,level:e.target.value})}><option value="step1">Step 1 (mechanism)</option><option value="shelf">Shelf / Step 2 (clinical)</option></select></div>
+        <div><div className="prompt-q" style={{marginBottom:6}}>System / topic</div>
+          <input className="os-input" value={draft.system} onChange={e=>setDraft({...draft,system:e.target.value})} placeholder="e.g. Cardiology" /></div>
+      </div>
+      <div className="prompt-q" style={{marginBottom:6}}>Clinical vignette</div>
+      <textarea className="answer-textarea" value={draft.vignette} onChange={e=>setDraft({...draft,vignette:e.target.value})} placeholder="A 68-year-old patient comes to..." />
+      <div className="prompt-q" style={{margin:"12px 0 6px"}}>Lead-in</div>
+      <input className="os-input" value={draft.leadIn} onChange={e=>setDraft({...draft,leadIn:e.target.value})} placeholder="Which of the following is the most likely diagnosis?" />
+      <div className="prompt-q" style={{margin:"12px 0 6px"}}>Options (select the correct one)</div>
+      {draft.options.map((o,i)=>(<div key={i} style={{display:"flex",gap:8,alignItems:"center",margin:"6px 0"}}>
+        <input type="radio" checked={draft.answerIndex===i} onChange={()=>setDraft({...draft,answerIndex:i})} />
+        <input className="os-input" value={o} onChange={e=>{ const op=[...draft.options]; op[i]=e.target.value; setDraft({...draft,options:op}); }} placeholder={"Option "+String.fromCharCode(65+i)} /></div>))}
+      <div className="prompt-q" style={{margin:"12px 0 6px"}}>Explanation</div>
+      <textarea className="answer-textarea" value={draft.explanation} onChange={e=>setDraft({...draft,explanation:e.target.value})} placeholder="Why the key is right and each distractor is wrong." />
+      <div style={{marginTop:14}}><button className="submit-btn" style={{marginTop:0}} onClick={submitDraft}>Run Forge gate &amp; submit for peer review</button></div>
+      {audit && (<div className="feedback" style={{borderLeftColor:audit.ok?"var(--good)":"var(--bad)"}}>
+        <div className="fb-result" style={{color:audit.ok?"var(--good)":"var(--bad)"}}>{audit.ok?"✓ Passed the Forge gate, sent to peer review":"✗ Fix these before submitting:"}</div>
+        {audit.fails.map((f,i)=><div key={i} style={{color:"var(--warn)",fontSize:"0.85rem"}}>• {f}</div>)}</div>)}
+    </div>)}
+    {csub==="review" && (contrib.qs.filter(q=>q.status==="in_review").length===0 ?
+      <div className="inprog"><p>Review queue is empty. Write a question, then sign in as another approved contributor to review it.</p></div> :
+      contrib.qs.filter(q=>q.status==="in_review").map(q=>{ const a=boardLint(q); const isAuthor=q.authorId===me.email;
+        const mine=q.reviews.find(r=>r.reviewerId===me.email); const ap=q.reviews.filter(r=>r.decision==="approve").length;
+        return (<div className="qblock" key={q.id}>
+          <div className="qid"><span className="os-badge polish">in review</span> <span style={{color:"var(--mid)",textTransform:"none",letterSpacing:0,fontWeight:700,marginLeft:6}}>{q.system||"untagged"} · by {userName(q.authorId)} · {ap}/2 approvals</span></div>
+          <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{q.vignette}</div>
+          <p className="qstem">{q.leadIn}</p>
+          <div className="choices">{q.options.map((o,i)=>(<div key={i} className={"choice "+(i===q.answerIndex?"correct":"")}><span className="choice-letter">{String.fromCharCode(65+i)}</span><span>{o}</span></div>))}</div>
+          <div className="feedback">{q.explanation}
+            <div style={{marginTop:8,fontSize:"0.84rem",color:a.ok?"var(--good)":"var(--bad)"}}>Forge gate: {a.ok?"all hard checks pass":(a.fails.length+" issue(s): "+a.fails.join(", "))}</div>
+            {isAuthor && <div style={{color:"var(--warn)",fontSize:"0.84rem",marginTop:6}}>You authored this; you cannot review your own item.</div>}
+            {mine && !isAuthor && <div style={{color:"var(--warn)",fontSize:"0.84rem",marginTop:6}}>You already reviewed this item.</div>}
+            {!isAuthor && !mine && (<div className="case-actions">
+              <button className="submit-btn" style={{marginTop:0,background:"var(--good)"}} onClick={()=>reviewItem(q.id,"approve")}>Approve</button>
+              <button className="ghost-btn" onClick={()=>reviewItem(q.id,"reject")}>Reject</button></div>)}
+            <div style={{fontSize:"0.8rem",color:"var(--dim)",marginTop:8}}>Two physician approvals publish the item into the Practice bank and mint its citable ID.</div></div>
+        </div>); }))}
+    {csub==="cv" && (<div className="qblock">
+      {(()=>{ const authored=contrib.qs.filter(q=>q.status==="published"&&q.authorId===me.email);
+        const reviewed=contrib.qs.filter(q=>q.status==="published"&&q.reviews&&q.reviews.some(r=>r.reviewerId===me.email&&r.decision==="approve"));
+        const cred=(me.app&&me.app.training)?me.app.training:"";
+        const lines=[me.name+(cred?", "+cred:""),"OpenStem Board Question Commons, contribution record (as of June 2026)","","PEER-REVIEWED QUESTIONS AUTHORED ("+authored.length+"):"];
+        authored.forEach(q=>lines.push("  "+q.citableId+"  "+(q.system||"")+" ("+(q.level==="step1"?"Step 1":"Shelf")+"). Reviewers: "+q.reviews.filter(r=>r.decision==="approve").map(r=>userName(r.reviewerId)).join(", ")+"."));
+        if(!authored.length) lines.push("  (none yet)");
+        lines.push("","PEER REVIEW SERVICE ("+reviewed.length+"):");
+        reviewed.forEach(q=>lines.push("  "+q.citableId+"  "+(q.system||"")+". Served as peer reviewer."));
+        if(!reviewed.length) lines.push("  (none yet)");
+        const text=lines.join("\n");
+        return (<div><div className="reveal-title">Citable contribution record</div>
+          <p style={{fontSize:"0.85rem",color:"var(--mid)",margin:"6px 0 12px"}}>Every published item is a citable micro-publication, creditable to its author and both reviewers, the incentive that builds the bank for free.</p>
+          <pre className="os-pre">{text}</pre>
+          <button className="os-link" style={{marginTop:10}} onClick={()=>navigator.clipboard.writeText(text)}>Copy for CV</button></div>); })()}
+    </div>)}
+  </div></section>);
+
+  return (<>
+    <nav><div className="nav-inner">
+      <button className="brand" onClick={goHome}><WMLogo /><span className="brand-name"><span>Open</span><span className="stem">Stem</span></span><span className="brand-tag">wardsandboards.com</span></button>
+      <div className="nav-pages">
+        <button className={"nav-link "+(mode==="home"?"active":"")} onClick={goHome}>Home</button>
+        <button className={"nav-link "+(mode==="learn"?"active":"")} onClick={()=>{ setActiveId(null); setMode("learn"); }}>Learn</button>
+        <button className={"nav-link "+(mode==="practice"?"active":"")} onClick={()=>setMode("practice")}>Practice</button>
+        <button className={"nav-link "+(mode==="contribute"?"active":"")} onClick={()=>setMode("contribute")}>Contribute</button>
+        <button className={"nav-link "+(mode==="authors"?"active":"")} onClick={()=>{ setAuthorSel(null); setMode("authors"); }}>Authors</button>
+        {isAdmin && <button className={"nav-link "+(mode==="admin"?"active":"")} onClick={()=>setMode("admin")}>Admin</button>}
+      </div>
+      <div className="nav-user">
+        {me ? (<span className="usermenu"><span className="userchip">{me.name}</span>
+            <span className={"rolebadge "+(isAdmin?"admin":(isContributor?"contributor":"learner"))}>{isAdmin?"admin":(isContributor?"contributor":"learner")}</span>
+            <button className="nav-link" onClick={signOut}>Sign out</button></span>)
+          : <button className="nav-link" onClick={()=>setMode("signin")}>Sign in</button>}
+        <button className="theme-toggle" title="Toggle light / dark" onClick={()=>setTheme(t=>t==="dark"?"light":"dark")}>{theme==="dark"?"☀️":"🌙"}</button>
+      </div>
+    </div></nav>
+
+    {mode==="home" && <Landing exampleCase={cases[0]} examplePractice={boardQS[0]} signedIn={!!me}
+      onGetStarted={()=>{ if(me){ setActiveId(null); setMode("learn"); } else setMode("signin"); }}
+      onGoLearn={()=>{ setActiveId(null); setMode("learn"); }} onGoPractice={()=>setMode("practice")} />}
+
+    {mode==="signin" && <SignIn users={auth.users} onSignIn={(em,nm)=>{ signIn(em,nm); setMode("home"); }} />}
+
+    {mode==="learn" && (!me ? <SignIn intent="Learn" users={auth.users} onSignIn={(em,nm)=>{ signIn(em,nm); setMode("learn"); }} />
+      : (caseData ? (
+        <CaseView caseData={caseData} onBack={()=>{ setActiveId(null); setMode("learn"); }} progress={progress} setProgress={setProgress}
+          review={review} onToggleReview={toggleReview} answers={answers[caseData.id]||{}} setAnswers={setAnswers}
+          reasonAnswer={reasons[caseData.id]||""} setReasonAnswer={setReasonAnswer} onOpenAuthor={openAuthor} />
+      ) : (<section className="section" style={{paddingTop:30}}><div className="wrap">
+        <WardMomentIntro />
+        <div className="sec-head"><div className="kicker">Ward moments</div><h2 className="h2">Pick a ward moment to start</h2></div>
+        <LearnLibrary cases={cases} onOpen={openCase} progress={progress} review={review} onToggleReview={toggleReview} />
+      </div></section>)))}
+
+    {mode==="practice" && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em,nm)=>{ signIn(em,nm); setMode("practice"); }} /> : <PracticeView />)}
+
+    {mode==="contribute" && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em,nm)=>{ signIn(em,nm); setMode("contribute"); }} />
+      : (!isContributor ? <section className="section" style={{paddingTop:34}}><div className="wrap"><ContributorApplication me={me} onApply={applyContributor} /></div></section>
+        : <ContributeWorkspace />))}
+
+    {mode==="authors" && <AuthorsView sel={authorSel} setSel={setAuthorSel} />}
+
+    {mode==="admin" && isAdmin && (<section className="section" style={{paddingTop:34}}><div className="wrap">
+      <div className="sec-head"><div className="kicker">Admin</div><h2 className="h2">Contributor applications</h2></div>
+      <AdminQueue users={auth.users} onDecide={decideApp} />
+    </div></section>)}
+
+    <footer><div className="foot-inner">
+      <div className="foot-left">OpenStem · learn the why, then practice the questions · built by a practicing hospitalist</div>
+      <div className="foot-right">OPENSTEM</div></div></footer>
+  </>);
+}
+
+/* library grid for Learn */
+function LearnLibrary({ cases, onOpen, progress, review, onToggleReview }){
+  const [cat,setCat]=useState("All");
+  const present=[]; CATEGORY_ORDER.forEach(k=>{ if(cases.some(c=>categoryOf(c.system)===k)) present.push(k); });
+  cases.forEach(c=>{ const k=categoryOf(c.system); if(!present.includes(k)) present.push(k); });
+  const tabs=["All",...present];
+  const shown=cat==="All"?cases:cases.filter(c=>categoryOf(c.system)===cat);
+  return (<>
+    <div className="cat-tabs">{tabs.map(t=>{ const count=t==="All"?cases.length:cases.filter(c=>categoryOf(c.system)===t).length;
+      return (<button key={t} className={"cat-tab "+(cat===t?"active":"")} onClick={()=>setCat(t)}>{t==="All"?"All cases":t}<span className="cat-count">{count}</span></button>); })}</div>
+    <div className="lib-grid">{shown.map(c=>{ const isRev=review.includes(c.id);
+      return (<div key={c.id} className="lib-card" onClick={()=>onOpen(c.id)}>
+        <div className="lib-tag">{c.topic}</div><h3>{c.title}</h3><div className="lib-rot">{c.wardMoment.rotation}</div>
+        <div className="lib-foot"><div className="prog-dots">{MODES.map(m=><div key={m.key} className={"pdot "+(progress[c.id]&&progress[c.id][m.key]?"done":"")} />)}</div>
+          <span className="prog-text">{MODES.filter(m=>progress[c.id]&&progress[c.id][m.key]).length} / 4 tiers</span>
+          <button className={"star-btn "+(isRev?"on":"")} title="Mark for review" onClick={e=>{ e.stopPropagation(); onToggleReview(c.id); }}>{isRev?"★":"☆"}</button></div>
+      </div>); })}</div>
+  </>);
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
