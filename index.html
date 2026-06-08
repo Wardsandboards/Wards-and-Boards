@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>OpenStem · learn the why, then practice the questions</title>
+<title>OpenStems · learn the why, then practice the questions</title>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -240,7 +240,7 @@
   .inprog h3 { font-size:1.05rem; font-weight:700; color:var(--mid); margin-bottom:7px; }
   .inprog p { font-size:0.9rem; color:var(--dim); line-height:1.6; max-width:440px; margin:0 auto; }
 
-  /* OpenStem additions */
+  /* OpenStems additions */
   .banner { background:color-mix(in srgb,var(--accent-3) 8%,transparent); border:1px solid var(--border); border-radius:14px;
     padding:13px 16px; font-size:0.9rem; color:var(--ink-soft); margin-bottom:18px; line-height:1.6; }
   .os-badge { display:inline-block; padding:2px 9px; border-radius:11px; font-size:0.62rem; font-weight:800; letter-spacing:.4px; text-transform:uppercase; }
@@ -619,7 +619,7 @@ function CaseView({ caseData, onBack, progress, setProgress, review, onToggleRev
   </div></section>);
 }
 function WMLogo(){
-  return (<svg className="wm-logo" viewBox="0 0 32 28" width="28" height="24" role="img" aria-label="OpenStem">
+  return (<svg className="wm-logo" viewBox="0 0 32 28" width="28" height="24" role="img" aria-label="OpenStems">
     <polygon points="16,3 23,15 9,15" fill="currentColor" opacity="0.5" />
     <polygon points="9,15 23,15 28,25 4,25" fill="currentColor" /></svg>);
 }
@@ -686,7 +686,7 @@ function SignIn({ intent, users, onSignIn }){
   return (<section className="section"><div className="wrap" style={{maxWidth:560}}>
     <div className="signin-card">
       <div className="kicker">{intent?("Sign in to "+intent):"Welcome"}</div>
-      <h2 className="h2" style={{marginBottom:8}}>Sign in to OpenStem</h2>
+      <h2 className="h2" style={{marginBottom:8}}>Sign in to OpenStems</h2>
       <p className="sec-lead" style={{marginTop:0}}>Learners get in instantly. To author or review questions, you apply to become a contributor after signing in.</p>
       <button className="btn btn-primary g-btn" style={{marginTop:8}} onClick={()=>onSignIn("you@med.school","You")}>Continue with Google <span className="g-note">demo</span></button>
       <div className="or">or use your name and email</div>
@@ -758,7 +758,7 @@ function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLea
     <header className="hero"><div className="wrap">
       <div className="hero-eyebrow">Clinical physiology, free for students</div>
       <h1>Climb from the basics to <em>wards and boards</em>.</h1>
-      <p className="hero-sub">OpenStem pairs short teaching cases with board questions peer-reviewed by physicians, all on the same topics.
+      <p className="hero-sub">OpenStems pairs short teaching cases with board questions peer-reviewed by physicians, all on the same topics.
         Understand the mechanism first in Learn, then test your recall in Practice.</p>
       <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
         <button className="btn btn-primary" onClick={onGetStarted}>{signedIn?"Go to Learn →":"Get started →"}</button>
@@ -788,7 +788,7 @@ function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLea
         <h3>Write a question, earn a citable publication</h3>
         <p>Physicians and residents can author and review questions. Each accepted item becomes a peer-reviewed, citable micro-publication with a stable identifier, credit you can list on a CV.</p>
         <div className="mini-steps"><span className="mini-step">1 · Write it</span><span className="mini-arrow">→</span><span className="mini-step">2 · Peer-reviewed by two physicians</span><span className="mini-arrow">→</span><span className="mini-step">3 · Published and citable</span></div>
-        <div className="cite-example"><div className="cite-h">Example citation</div><code>Rivera A. Decompensated heart failure and the Frank-Starling relationship. OpenStem Board Question Commons, 2026; OS-2026-0007. Peer-reviewed by Chen M, Okafor T.</code></div>
+        <div className="cite-example"><div className="cite-h">Example citation</div><code>Rivera A. Decompensated heart failure and the Frank-Starling relationship. OpenStems Board Question Commons, 2026; OS-2026-0007. Peer-reviewed by Chen M, Okafor T.</code></div>
       </div>
     </div></section>
     <section className="section" style={{paddingTop:8}}><div className="wrap">
@@ -946,7 +946,7 @@ function AuthorsView({ sel, setSel }){
   </div></section>);
 }
 function App(){
-  const [theme,setTheme]=useState(()=>loadLS("os_theme","dark"));
+  const [theme,setTheme]=useState(()=>loadLS("os_theme","light"));
   const [auth,setAuth]=useState(()=>loadLS("os_auth",{ currentEmail:null, users:JSON.parse(JSON.stringify(DEMO_USERS)) }));
   const [mode,setMode]=useState("home");
   const [authorSel,setAuthorSel]=useState(null);
@@ -978,7 +978,7 @@ function App(){
   const me = auth.currentEmail ? auth.users[auth.currentEmail] : null;
   const isAdmin = me && ADMIN_EMAILS.includes(me.email);
   const isContributor = me && me.role==="contributor" && me.app && me.app.status==="approved";
-  const userName = email => (auth.users[email]||{}).name || email || "OpenStem editorial";
+  const userName = email => (auth.users[email]||{}).name || email || "OpenStems editorial";
   const signIn = (email,name)=>setAuth(a=>{ const u={...a.users}; if(!u[email]) u[email]={name:name||email,email,role:"learner",app:{status:"none"}}; return {...a,users:u,currentEmail:email}; });
   const signOut = ()=>{ setAuth(a=>({...a,currentEmail:null})); setMode("home"); };
   const applyContributor = form=>setAuth(a=>{ const u={...a.users}; const cur=u[a.currentEmail]; u[a.currentEmail]={...cur,app:{status:"pending",...form}}; return {...a,users:u}; });
@@ -1114,7 +1114,7 @@ function App(){
       {(()=>{ const authored=contrib.qs.filter(q=>q.status==="published"&&q.authorId===me.email);
         const reviewed=contrib.qs.filter(q=>q.status==="published"&&q.reviews&&q.reviews.some(r=>r.reviewerId===me.email&&r.decision==="approve"));
         const cred=(me.app&&me.app.training)?me.app.training:"";
-        const lines=[me.name+(cred?", "+cred:""),"OpenStem Board Question Commons, contribution record (as of June 2026)","","PEER-REVIEWED QUESTIONS AUTHORED ("+authored.length+"):"];
+        const lines=[me.name+(cred?", "+cred:""),"OpenStems Board Question Commons, contribution record (as of June 2026)","","PEER-REVIEWED QUESTIONS AUTHORED ("+authored.length+"):"];
         authored.forEach(q=>lines.push("  "+q.citableId+"  "+(q.system||"")+" ("+(q.level==="step1"?"Step 1":"Shelf")+"). Reviewers: "+q.reviews.filter(r=>r.decision==="approve").map(r=>userName(r.reviewerId)).join(", ")+"."));
         if(!authored.length) lines.push("  (none yet)");
         lines.push("","PEER REVIEW SERVICE ("+reviewed.length+"):");
@@ -1130,7 +1130,7 @@ function App(){
 
   return (<>
     <nav><div className="nav-inner">
-      <button className="brand" onClick={goHome}><WMLogo /><span className="brand-name"><span>Open</span><span className="stem">Stem</span></span><span className="brand-tag">wardsandboards.com</span></button>
+      <button className="brand" onClick={goHome}><WMLogo /><span className="brand-name"><span>Open</span><span className="stem">Stems</span></span><span className="brand-tag">wardsandboards.com</span></button>
       <div className="nav-pages">
         <button className={"nav-link "+(mode==="home"?"active":"")} onClick={goHome}>Home</button>
         <button className={"nav-link "+(mode==="learn"?"active":"")} onClick={()=>{ setActiveId(null); setMode("learn"); }}>Learn</button>
@@ -1179,8 +1179,8 @@ function App(){
     </div></section>)}
 
     <footer><div className="foot-inner">
-      <div className="foot-left">OpenStem · learn the why, then practice the questions · built by a practicing hospitalist</div>
-      <div className="foot-right">OPENSTEM</div></div></footer>
+      <div className="foot-left">OpenStems · learn the why, then practice the questions · built by a practicing hospitalist</div>
+      <div className="foot-right">OPENSTEMS</div></div></footer>
   </>);
 }
 
