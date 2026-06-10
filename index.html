@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>OpenStems · learn the why, then practice the questions</title>
+<title>Wards & Boards · learn the why, then practice the questions</title>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="cases.js?v=24"></script>
 <script>window.CASES = (typeof CASES!=="undefined") ? CASES : [];</script>
+<script src="learning-points.js?v=2"></script>
 <style>
   /* ── Theme tokens (from Ward Moments) ── */
   :root, [data-theme="dark"] {
@@ -240,7 +241,7 @@
   .inprog h3 { font-size:1.05rem; font-weight:700; color:var(--mid); margin-bottom:7px; }
   .inprog p { font-size:0.9rem; color:var(--dim); line-height:1.6; max-width:440px; margin:0 auto; }
 
-  /* OpenStems additions */
+  /* Wards & Boards additions */
   .banner { background:color-mix(in srgb,var(--accent-3) 8%,transparent); border:1px solid var(--border); border-radius:14px;
     padding:13px 16px; font-size:0.9rem; color:var(--ink-soft); margin-bottom:18px; line-height:1.6; }
   .os-badge { display:inline-block; padding:2px 9px; border-radius:11px; font-size:0.62rem; font-weight:800; letter-spacing:.4px; text-transform:uppercase; }
@@ -440,7 +441,7 @@ function buildQuestions(){
   const out=[];
   (window.CASES||[]).filter(c=>c.active!==false&&c.ms1&&c.ms1.questions).forEach(c=>{
     c.ms1.questions.forEach((q,i)=>{ if(!q.choices) return;
-      const it={id:c.id+"-"+(q.id||i),caseId:c.id,caseTitle:c.title,system:c.system,topic:c.topic,
+      const it={id:c.id+"-"+(q.id||i),caseId:c.id,qkey:c.id+":"+(q.id||i),caseTitle:c.title,system:c.system,topic:c.topic,
         vignette:(c.vignette||"").replace(/\s+/g," ").trim(),leadIn:q.stem,options:q.choices,answerIndex:q.correct,
         explanation:q.feedback,source:"Ward Moments"};
       it.lint=boardLint(it); out.push(it); });
@@ -449,9 +450,10 @@ function buildQuestions(){
 }
 
 /* ===================== Ward Moments components (Learn) ===================== */
-function Prompt({ prompt, value, onChange, onSave }){
+function Prompt({ prompt, value, onChange, onSave, caseId }){
   const [results,setResults]=useState(null);
   const grade=()=>{ if(!value.trim())return; setResults(gradeAnswer(value,prompt.rubric)); onSave&&onSave(); };
+  const lp=lpFor((caseId||"")+":"+prompt.id);
   return (<div className="prompt-block">
     <div className="prompt-q">{prompt.question}</div>
     <textarea className="answer-textarea" placeholder={prompt.hint||"Answer in your own words…"} value={value}
@@ -460,13 +462,14 @@ function Prompt({ prompt, value, onChange, onSave }){
     {results && (<div className="rubric"><div className="rubric-head">Key concepts</div>
       {results.map((r,i)=>(<div key={i} className={"rubric-item "+(r.hit?"rubric-hit":"rubric-miss")}>
         <span className="rubric-cdot" /><span>{r.concept}</span></div>))}</div>)}
+    {results && lp && (<div style={{marginTop:10}}><AnkiButton front={lp.front} back={lp.back} /></div>)}
   </div>);
 }
-function WardMoment({ wm, answers, onChange, onSaveReason }){
+function WardMoment({ wm, answers, onChange, onSaveReason, caseId }){
   return (<div className="ward">
     <div className="ward-label"><span className="brand-dot" /> Ward Moment</div>
     <div className="ward-scn">{wm.scenario}</div>
-    {wm.prompts.map(p=>(<Prompt key={p.id} prompt={p} value={answers[p.id]||""} onChange={v=>onChange(p.id,v)}
+    {wm.prompts.map(p=>(<Prompt key={p.id} prompt={p} caseId={caseId} value={answers[p.id]||""} onChange={v=>onChange(p.id,v)}
       onSave={()=>{ if(p.id==="reason") onSaveReason(answers[p.id]||""); }} />))}
     <div className="ward-why">💡 {wm.why}</div>
   </div>);
@@ -502,25 +505,29 @@ function StarlingCurve({ compact=false, phase="interactive", curves="both", poin
     {p && !point && (<div className="curve-readout"><span><b>Preload:</b> {p.edv}</span><span><b>Stroke volume:</b> {p.sv}</span><span><b>Congestion:</b> {p.cong}</span></div>)}
   </div>);
 }
-/* ===================== Anki export (copy a question as Front <Tab> Back) ===================== */
+/* ===================== Anki export (copy the key learning point as Front <Tab> Back) ===================== */
 const ankiLetter=i=>String.fromCharCode(65+i);
+// Distilled key-learning-point card for a question, keyed by "caseId:questionId".
+// Falls back to the question-and-answer card if no learning point is defined.
+function lpFor(qkey){ const lp=(window.LEARNING_POINTS||{})[qkey]; return lp?{front:lp.front, back:lp.back}:null; }
 function buildAnkiCard({ stem, choices, correct, explanation }){
   const front=stem+"<br><br>"+choices.map((o,i)=>ankiLetter(i)+". "+o).join("<br>");
   const back="Answer: "+ankiLetter(correct)+". "+choices[correct]+(explanation?"<br><br>"+explanation:"");
   return { front, back };
 }
+function ankiCard(qkey, fallback){ return lpFor(qkey) || buildAnkiCard(fallback); }
 function AnkiButton({ front, back, style }){
   const [copied,setCopied]=useState(false);
   const copy=()=>{ const clean=s=>String(s).replace(/[\t\r\n]+/g," ");
     navigator.clipboard.writeText(clean(front)+"\t"+clean(back)); setCopied(true); setTimeout(()=>setCopied(false),9000); };
   return (<span className="anki-wrap" style={style}>
     <button className="anki-btn" onClick={copy}
-      title="Copies this question as one Anki card: the question is the Front, the answer and explanation are the Back, separated by a Tab.">
+      title="Copies the key learning point for this question as one Anki card: a recall cue is the Front, the learning point is the Back, separated by a Tab.">
       {copied?"Copied for Anki ✓":"⎘ Anki card"}</button>
-    {copied && (<span className="anki-help">Copied as <b>Front&nbsp;⇥&nbsp;Back</b>. To add it in Anki: paste into a blank text file and save it, then in Anki choose <b>File ▸ Import</b>, set note type to <b>Basic</b> and <b>Fields separated by: Tab</b>.</span>)}
+    {copied && (<span className="anki-help">Copied the <b>key learning point</b> as <b>Front&nbsp;⇥&nbsp;Back</b>. To add it in Anki: paste into a blank text file and save it, then in Anki choose <b>File ▸ Import</b>, set note type to <b>Basic</b> and <b>Fields separated by: Tab</b>.</span>)}
   </span>);
 }
-function Quiz({ questions, intro, onComplete }){
+function Quiz({ questions, intro, onComplete, caseId }){
   const [current,setCurrent]=useState(0); const [selected,setSelected]=useState(null);
   const [submitted,setSubmitted]=useState(false); const [score,setScore]=useState(0); const blockRef=useRef(null);
   const q=questions[current]; const total=questions.length;
@@ -541,7 +548,7 @@ function Quiz({ questions, intro, onComplete }){
     {intro && <p className="mode-intro">{intro}</p>}
     <div className="qblock" ref={blockRef}>
       <div className="qid">Question {q.id}
-        {submitted && !q.placeholder && <AnkiButton {...buildAnkiCard({stem:q.stem,choices:q.choices,correct:q.correct,explanation:q.feedback})} style={{float:"right"}} />}</div>
+        {submitted && !q.placeholder && <AnkiButton {...ankiCard(caseId+":"+q.id,{stem:q.stem,choices:q.choices,correct:q.correct,explanation:q.feedback})} style={{float:"right"}} />}</div>
       {q.placeholder ? (<div className="placeholder-q"><span className="inprog-badge">Coming soon</span>
         <p style={{margin:"12px 0",color:"var(--mid)"}}>{q.topic}</p>
         <button className="next-btn" onClick={next}>{current+1>=total?"See the mechanism →":"Next →"}</button></div>)
@@ -607,12 +614,12 @@ function CaseView({ caseData, onBack, progress, setProgress, review, onToggleRev
     <div className="case-title">{caseData.title}</div>
     <div className="case-sub">{caseData.system} · {caseData.topic}</div>
     <QByline att={attributionFor(caseData)} onOpenAuthor={onOpenAuthor} />
-    <WardMoment wm={caseData.wardMoment} answers={answers} onChange={(pid,v)=>setAnswers(caseData.id,pid,v)} onSaveReason={(txt)=>setReasonAnswer(caseData.id,txt)} />
+    <WardMoment wm={caseData.wardMoment} caseId={caseData.id} answers={answers} onChange={(pid,v)=>setAnswers(caseData.id,pid,v)} onSaveReason={(txt)=>setReasonAnswer(caseData.id,txt)} />
     <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{caseData.vignette}</div>
     <div className="modes">{MODES.map(m=>(<button key={m.key} className={"mode-btn "+(mode===m.key?"active ":"")+(!m.live?"soon":"")} onClick={()=>switchMode(m.key)}>
       <span className="mlabel">{m.label}</span><span className="msub">{m.sub}</span></button>))}</div>
     {modeMeta.live ? (<>
-      <div key={sessionKey}>{!showReveal && caseData.ms1 && (<Quiz questions={caseData.ms1.questions} intro={caseData.ms1.intro} onComplete={complete} />)}</div>
+      <div key={sessionKey}>{!showReveal && caseData.ms1 && (<Quiz questions={caseData.ms1.questions} intro={caseData.ms1.intro} onComplete={complete} caseId={caseData.id} />)}</div>
       {showReveal && (<><div ref={revealRef} style={{scrollMarginTop:78}}><MechanismReveal mechanism={caseData.mechanism} /></div>
         <div className="case-actions"><button className="ghost-btn" onClick={restart}>↺ Restart</button>
           <button className={"ghost-btn "+(isRev?"on":"")} onClick={()=>onToggleReview(caseData.id)}>{isRev?"★ Marked for review":"☆ Mark for review"}</button>
@@ -622,7 +629,7 @@ function CaseView({ caseData, onBack, progress, setProgress, review, onToggleRev
   </div></section>);
 }
 function WMLogo(){
-  return (<svg className="wm-logo" viewBox="0 0 32 28" width="28" height="24" role="img" aria-label="OpenStems">
+  return (<svg className="wm-logo" viewBox="0 0 32 28" width="28" height="24" role="img" aria-label="Wards & Boards">
     <polygon points="16,3 23,15 9,15" fill="currentColor" opacity="0.5" />
     <polygon points="9,15 23,15 28,25 4,25" fill="currentColor" /></svg>);
 }
@@ -647,7 +654,7 @@ function Pyramid(){
 /* ===================== Practice card (board question, WM styling) ===================== */
 function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpenAuthor }){
   const answered=picked!==undefined; const correct=answered&&picked===q.answerIndex;
-  const anki=buildAnkiCard({stem:q.vignette+"<br><br>"+q.leadIn, choices:q.options, correct:q.answerIndex, explanation:q.explanation});
+  const anki=ankiCard(q.qkey,{stem:q.vignette+"<br><br>"+q.leadIn, choices:q.options, correct:q.answerIndex, explanation:q.explanation});
   const att=attributionFor(q);
   return (<div className="qblock">
     <div className="qid"><span className="os-badge src">{q.source}</span>{" "}
@@ -689,7 +696,7 @@ function SignIn({ intent, users, onSignIn }){
   return (<section className="section"><div className="wrap" style={{maxWidth:560}}>
     <div className="signin-card">
       <div className="kicker">{intent?("Sign in to "+intent):"Welcome"}</div>
-      <h2 className="h2" style={{marginBottom:8}}>Sign in to OpenStems</h2>
+      <h2 className="h2" style={{marginBottom:8}}>Sign in to Wards & Boards</h2>
       <p className="sec-lead" style={{marginTop:0}}>Learners get in instantly. To author or review questions, you apply to become a contributor after signing in.</p>
       <button className="btn btn-primary g-btn" style={{marginTop:8}} onClick={()=>onSignIn("you@med.school","You")}>Continue with Google <span className="g-note">demo</span></button>
       <div className="or">or use your name and email</div>
@@ -703,7 +710,7 @@ function SignIn({ intent, users, onSignIn }){
     </div>
   </div></section>);
 }
-function MiniQuestion({ q }){
+function MiniQuestion({ q, caseId }){
   const [sel,setSel]=useState(null); const [sub,setSub]=useState(false); if(!q) return null;
   return (<div className="qblock">
     <p className="qstem">{q.stem}</p>
@@ -711,7 +718,7 @@ function MiniQuestion({ q }){
       return (<button key={i} className={cls} disabled={sub} onClick={()=>setSel(i)}><span className="choice-letter">{String.fromCharCode(65+i)}</span><span>{c}</span></button>); })}</div>
     {!sub && <button className="submit-btn" disabled={sel===null} onClick={()=>setSub(true)}>Submit</button>}
     {sub && (<div className={"feedback "+(sel!==q.correct?"bad":"")}><div className="fb-result" style={{color:sel===q.correct?"var(--good)":"var(--bad)"}}>{sel===q.correct?"✓ Correct":"✗ Not quite"}</div>{q.feedback}</div>)}
-    {sub && <div style={{marginTop:10}}><AnkiButton {...buildAnkiCard({stem:q.stem,choices:q.choices,correct:q.correct,explanation:q.feedback})} /></div>}
+    {sub && <div style={{marginTop:10}}><AnkiButton {...ankiCard(caseId+":"+q.id,{stem:q.stem,choices:q.choices,correct:q.correct,explanation:q.feedback})} /></div>}
   </div>);
 }
 function LandingPractice({ q }){ const [p,setP]=useState(undefined); const [r,setR]=useState(0); if(!q) return null;
@@ -761,7 +768,7 @@ function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLea
     <header className="hero"><div className="wrap">
       <div className="hero-eyebrow">Clinical physiology, free for students</div>
       <h1>Climb from the basics to <em>wards and boards</em>.</h1>
-      <p className="hero-sub">OpenStems pairs short teaching cases with board questions peer-reviewed by physicians, all on the same topics.
+      <p className="hero-sub">Wards & Boards pairs short teaching cases with board questions peer-reviewed by physicians, all on the same topics.
         Understand the mechanism first in Learn, then test your recall in Practice.</p>
       <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
         <button className="btn btn-primary" onClick={onGetStarted}>{signedIn?"Go to Learn →":"Get started →"}</button>
@@ -791,7 +798,7 @@ function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLea
         <h3>Write a question, earn a citable publication</h3>
         <p>Physicians and residents can author and review questions. Each accepted item becomes a peer-reviewed, citable micro-publication with a stable identifier, credit you can list on a CV.</p>
         <div className="mini-steps"><span className="mini-step">1 · Write it</span><span className="mini-arrow">→</span><span className="mini-step">2 · Peer-reviewed by two physicians</span><span className="mini-arrow">→</span><span className="mini-step">3 · Published and citable</span></div>
-        <div className="cite-example"><div className="cite-h">Example citation</div><code>Rivera A. Decompensated heart failure and the Frank-Starling relationship. OpenStems Board Question Commons, 2026; OS-2026-0007. Peer-reviewed by Chen M, Okafor T.</code></div>
+        <div className="cite-example"><div className="cite-h">Example citation</div><code>Rivera A. Decompensated heart failure and the Frank-Starling relationship. Wards & Boards Question Commons, 2026; WB-2026-0007. Peer-reviewed by Chen M, Okafor T.</code></div>
       </div>
     </div></section>
     <section className="section" style={{paddingTop:8}}><div className="wrap">
@@ -805,7 +812,7 @@ function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLea
         <div className="flow-sub">Then work the mechanism on an interactive graph</div>
         <StarlingCurve compact />
         <div className="flow-sub">...and predict the answer to the ward moment</div>
-        {exampleCase && <MiniQuestion q={exampleCase.ms1.questions[0]} />}
+        {exampleCase && <MiniQuestion q={exampleCase.ms1.questions[0]} caseId={exampleCase.id} />}
         <div style={{marginTop:14}}><button className="ghost-btn" onClick={onGoLearn}>Open the full case in Learn →</button></div>
         <div className="flow-arrow-down">↓  then test recall on the same topic</div>
         <div className="flow-step-label"><span className="flow-step-n">2</span> In Practice, a board-style question</div>
@@ -823,22 +830,22 @@ const COMMUNITY_AUTHORS = [
     published:24, reviews:38, stars:4.8, joined:"Jan 2026",
     badges:[["★","Founding author"],["▲","Top author"],["✚","25 published"],["✦","Five-star author"]],
     bio:"Cardiology fellow who built most of the cardiovascular physiology set.",
-    qs:[["Frank-Starling in decompensated heart failure","Cardiology",4.9,"OS-2026-0007"],["Coronary perfusion in diastole","Cardiology",4.7,"OS-2026-0012"],["Aortic stenosis and exertional syncope","Cardiology",4.8,"OS-2026-0018"]] },
+    qs:[["Frank-Starling in decompensated heart failure","Cardiology",4.9,"WB-2026-0007"],["Coronary perfusion in diastole","Cardiology",4.7,"WB-2026-0012"],["Aortic stenosis and exertional syncope","Cardiology",4.8,"WB-2026-0018"]] },
   { id:"chen", name:"Dr. Marcus Chen", creds:"MD", role:"Internal Medicine Resident, PGY-3", institution:"Stanford Medicine", color:"#8b5cf6", initials:"MC", photo:null, followers:408, orcid:"0000-0001-5109-3700",
     published:17, reviews:52, stars:4.9, joined:"Jan 2026",
     badges:[["✓","Top reviewer"],["★","Founding author"],["◆","Editors' pick"],["✦","Five-star author"]],
     bio:"Internal medicine resident; reviews more questions than anyone on the platform.",
-    qs:[["Hyperkalemia and the resting membrane potential","Cardiology",4.9,"OS-2026-0021"],["V/Q mismatch in pneumonia","Pulmonology",4.8,"OS-2026-0024"]] },
+    qs:[["Hyperkalemia and the resting membrane potential","Cardiology",4.9,"WB-2026-0021"],["V/Q mismatch in pneumonia","Pulmonology",4.8,"WB-2026-0024"]] },
   { id:"okafor", name:"Dr. Tomi Okafor", creds:"MD", role:"Hospitalist", institution:"UC Irvine", color:"#10b981", initials:"TO", photo:null, followers:156, orcid:"0000-0003-4180-1234",
     published:12, reviews:20, stars:4.7, joined:"Feb 2026",
     badges:[["▲","Rising author"],["✚","10 published"]],
     bio:"Hospitalist focused on the hematology and acid-base sets.",
-    qs:[["Iron-deficiency anemia: small, pale cells","Hematology",4.7,"OS-2026-0028"],["B12 deficiency and macrocytosis","Hematology",4.6,"OS-2026-0031"]] },
+    qs:[["Iron-deficiency anemia: small, pale cells","Hematology",4.7,"WB-2026-0028"],["B12 deficiency and macrocytosis","Hematology",4.6,"WB-2026-0031"]] },
   { id:"patel", name:"Dr. Sana Patel", creds:"MD, MPH", role:"Nephrology Fellow", institution:"UCSF", color:"#f59e0b", initials:"SP", photo:null, followers:74, orcid:"0000-0002-7898-5678",
     published:9, reviews:14, stars:4.6, joined:"Mar 2026",
     badges:[["▲","Rising author"]],
     bio:"Nephrology fellow writing the renal and electrolyte questions.",
-    qs:[["Anemia of chronic kidney disease","Hematology",4.6,"OS-2026-0034"]] },
+    qs:[["Anemia of chronic kidney disease","Hematology",4.6,"WB-2026-0034"]] },
 ];
 const BADGE_CATALOG = [
   ["★","Founding author","One of the first physicians to publish on the platform."],
@@ -951,9 +958,9 @@ function AuthorsView({ sel, setSel }){
 function AboutView(){
   return (<>
     <header className="hero"><div className="wrap">
-      <div className="hero-eyebrow">About OpenStems</div>
+      <div className="hero-eyebrow">About Wards & Boards</div>
       <h1>A free, open resource for <em>clinical physiology</em>.</h1>
-      <p className="hero-sub">OpenStems is a free teaching resource that helps medical students understand the mechanism behind the medicine, then practice it with board-style questions. Written and reviewed by physicians. No paywall, no ads, no catch.</p>
+      <p className="hero-sub">Wards & Boards is a free teaching resource that helps medical students understand the mechanism behind the medicine, then practice it with board-style questions. Written and reviewed by physicians. No paywall, no ads, no catch.</p>
     </div></header>
 
     <section className="section"><div className="wrap">
@@ -991,7 +998,7 @@ function AboutView(){
     <section className="section" style={{paddingTop:8}}><div className="wrap" style={{maxWidth:760}}>
       <div className="contrib-callout"><div className="kicker">Who is building this</div>
         <h3>Built by a practicing physician</h3>
-        <p>OpenStems is built by a practicing internal-medicine hospitalist who co-teaches first-year medical physiology. The teaching standard comes from the bedside, and every question is held to the same item-writing rigor used on the board exams.</p>
+        <p>Wards & Boards is built by a practicing internal-medicine hospitalist who co-teaches first-year medical physiology. The teaching standard comes from the bedside, and every question is held to the same item-writing rigor used on the board exams.</p>
       </div>
     </div></section>
 
@@ -999,7 +1006,7 @@ function AboutView(){
       <div className="sec-head"><div className="kicker">Get involved</div><h2 className="h2">Help build it</h2></div>
       <div className="step-row">
         <div className="step-card"><div className="step-n">A</div><div><h3>Physicians and residents</h3><p>Write and review questions, and put citable, peer-reviewed teaching work on your CV.</p></div></div>
-        <div className="step-card"><div className="step-n">B</div><div><h3>Medical schools</h3><p>Adopt OpenStems in your preclinical curriculum and help shape what gets built next.</p></div></div>
+        <div className="step-card"><div className="step-n">B</div><div><h3>Medical schools</h3><p>Adopt Wards & Boards in your preclinical curriculum and help shape what gets built next.</p></div></div>
         <div className="step-card"><div className="step-n">C</div><div><h3>Students</h3><p>Use it, share it, and tell us what would help you actually learn.</p></div></div>
       </div>
     </div></section>
@@ -1020,9 +1027,9 @@ function App(){
   const [pst,setPst]=useState(()=>loadLS("os_practice",{att:{},rate:{}})); const [picks,setPicks]=useState({});
   const [boardQS,setBoardQS]=useState(()=>buildQuestions());
   useEffect(()=>{ fetch("questions.board.json?v=4").then(r=>r.json()).then(arr=>{
-    const mapped=(arr||[]).map((q,i)=>{ const it={id:q.caseId+"-"+q.origQuestionId+"-b",caseId:q.caseId,caseTitle:q.caseTitle,
+    const mapped=(arr||[]).map((q,i)=>{ const it={id:q.caseId+"-"+q.origQuestionId+"-b",caseId:q.caseId,qkey:q.caseId+":"+q.origQuestionId,caseTitle:q.caseTitle,
       system:q.system,topic:q.topic,vignette:q.vignette,leadIn:q.leadIn,options:q.options,answerIndex:q.answerIndex,
-      explanation:q.explanation,source:"Forge",citableId:"OS-2026-"+String(i+1).padStart(4,"0")}; it.lint=boardLint(it); return it; });
+      explanation:q.explanation,source:"Forge",citableId:"WB-2026-"+String(i+1).padStart(4,"0")}; it.lint=boardLint(it); return it; });
     if(mapped.length) setBoardQS(mapped); }).catch(()=>{}); },[]);
   const [contrib,setContrib]=useState(()=>loadLS("os_contrib",{qs:[],counter:100}));
   const [csub,setCsub]=useState("author"); const [draft,setDraft]=useState(blankDraft); const [audit,setAudit]=useState(null);
@@ -1038,7 +1045,7 @@ function App(){
   const me = auth.currentEmail ? auth.users[auth.currentEmail] : null;
   const isAdmin = me && ADMIN_EMAILS.includes(me.email);
   const isContributor = me && me.role==="contributor" && me.app && me.app.status==="approved";
-  const userName = email => (auth.users[email]||{}).name || email || "OpenStems editorial";
+  const userName = email => (auth.users[email]||{}).name || email || "Wards & Boards editorial";
   const signIn = (email,name)=>setAuth(a=>{ const u={...a.users}; if(!u[email]) u[email]={name:name||email,email,role:"learner",app:{status:"none"}}; return {...a,users:u,currentEmail:email}; });
   const signOut = ()=>{ setAuth(a=>({...a,currentEmail:null})); setMode("home"); };
   const applyContributor = form=>setAuth(a=>{ const u={...a.users}; const cur=u[a.currentEmail]; u[a.currentEmail]={...cur,app:{status:"pending",...form}}; return {...a,users:u}; });
@@ -1071,7 +1078,7 @@ function App(){
     setDraft(blankDraft); setAudit(null); setCsub("review"); };
   const reviewItem=(qid,decision)=>updateC(c=>{ const q=c.qs.find(x=>x.id===qid); q.reviews.push({reviewerId:me.email,decision});
     const ap=q.reviews.filter(r=>r.decision==="approve").length;
-    if(decision==="reject") q.status="rejected"; else if(ap>=2){ q.status="published"; c.counter+=1; q.citableId="OS-2026-"+String(c.counter).padStart(4,"0"); } });
+    if(decision==="reject") q.status="rejected"; else if(ap>=2){ q.status="published"; c.counter+=1; q.citableId="WB-2026-"+String(c.counter).padStart(4,"0"); } });
 
   const PracticeBank=({list,empty})=> (<div>
     {list.length===0 ? <div className="inprog">{empty}</div> :
@@ -1174,7 +1181,7 @@ function App(){
       {(()=>{ const authored=contrib.qs.filter(q=>q.status==="published"&&q.authorId===me.email);
         const reviewed=contrib.qs.filter(q=>q.status==="published"&&q.reviews&&q.reviews.some(r=>r.reviewerId===me.email&&r.decision==="approve"));
         const cred=(me.app&&me.app.training)?me.app.training:"";
-        const lines=[me.name+(cred?", "+cred:""),"OpenStems Board Question Commons, contribution record (as of June 2026)","","PEER-REVIEWED QUESTIONS AUTHORED ("+authored.length+"):"];
+        const lines=[me.name+(cred?", "+cred:""),"Wards & Boards Question Commons, contribution record (as of June 2026)","","PEER-REVIEWED QUESTIONS AUTHORED ("+authored.length+"):"];
         authored.forEach(q=>lines.push("  "+q.citableId+"  "+(q.system||"")+" ("+(q.level==="step1"?"Step 1":"Shelf")+"). Reviewers: "+q.reviews.filter(r=>r.decision==="approve").map(r=>userName(r.reviewerId)).join(", ")+"."));
         if(!authored.length) lines.push("  (none yet)");
         lines.push("","PEER REVIEW SERVICE ("+reviewed.length+"):");
@@ -1190,7 +1197,7 @@ function App(){
 
   return (<>
     <nav><div className="nav-inner">
-      <button className="brand" onClick={goHome}><WMLogo /><span className="brand-name"><span>Open</span><span className="stem">Stems</span></span><span className="brand-tag">openstems.org</span></button>
+      <button className="brand" onClick={goHome}><WMLogo /><span className="brand-name"><span>Wards</span><span className="stem">&nbsp;&amp; Boards</span></span><span className="brand-tag">wardsandboards.com</span></button>
       <div className="nav-pages">
         <button className={"nav-link "+(mode==="home"?"active":"")} onClick={goHome}>Home</button>
         <button className={"nav-link "+(mode==="learn"?"active":"")} onClick={()=>{ setActiveId(null); setMode("learn"); }}>Learn</button>
@@ -1242,8 +1249,8 @@ function App(){
     </div></section>)}
 
     <footer><div className="foot-inner">
-      <div className="foot-left">OpenStems · learn the why, then practice the questions · built by a practicing hospitalist</div>
-      <div className="foot-right">OPENSTEMS</div></div></footer>
+      <div className="foot-left">Wards & Boards · learn the why, then practice the questions · built by a practicing hospitalist</div>
+      <div className="foot-right">WARDS &amp; BOARDS</div></div></footer>
   </>);
 }
 
