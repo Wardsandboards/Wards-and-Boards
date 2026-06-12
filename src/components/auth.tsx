@@ -2,7 +2,13 @@ import { useState } from 'react'
 import { ADMIN_EMAILS, TRAINING_LEVELS } from '../constants'
 import type { User } from '../types'
 
-export function SignIn({ intent, users, onSignIn }: { intent?: string; users: Record<string, User>; onSignIn: (email: string, name: string) => void }) {
+export function SignIn({ intent, users, onSignIn, onGoogle, googleLive }: {
+  intent?: string
+  users: Record<string, User>
+  onSignIn: (email: string, name: string) => void
+  onGoogle?: () => void
+  googleLive?: boolean
+}) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   return (
@@ -11,7 +17,7 @@ export function SignIn({ intent, users, onSignIn }: { intent?: string; users: Re
         <div className="kicker">{intent ? 'Sign in to ' + intent : 'Welcome'}</div>
         <h2 className="h2" style={{ marginBottom: 8 }}>Sign in to Wards & Boards</h2>
         <p className="sec-lead" style={{ marginTop: 0 }}>Learners get in instantly. To author or review questions, you apply to become a contributor after signing in.</p>
-        <button className="btn btn-primary g-btn" style={{ marginTop: 8 }} onClick={() => onSignIn('you@med.school', 'You')}>Continue with Google <span className="g-note">demo</span></button>
+        <button className="btn btn-primary g-btn" style={{ marginTop: 8 }} onClick={() => (onGoogle ? onGoogle() : onSignIn('you@med.school', 'You'))}>Continue with Google {!googleLive && <span className="g-note">demo</span>}</button>
         <div className="or">or use your name and email</div>
         <input className="os-input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
         <input className="os-input" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ marginTop: 8 }} />
