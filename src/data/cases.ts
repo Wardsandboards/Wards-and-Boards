@@ -1,3 +1,4 @@
+import type { Case } from '../types'
 // ============================================================
 //  CASES DATA FILE - all content lives here, no UI edits needed
 //
@@ -14,7 +15,7 @@
 //  Only MS1 is live in the UI; harder tiers show "in progress".
 // ============================================================
 
-const CASES = [
+const _CASES = [
 
   // ── CASE 1: Decompensated Heart Failure / Frank-Starling ──
   {
@@ -300,6 +301,7 @@ const CASES = [
   {
     id: "aortic-stenosis",
     active: true,
+    video: "",
     title: "Syncope on Exertion",
     system: "Cardiovascular",
     topic: "Afterload / Pressure Overload",
@@ -1539,3 +1541,5 @@ const CASES = [
     },
   },
 ];
+
+export const CASES = _CASES as unknown as Case[]

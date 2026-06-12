@@ -1,0 +1,398 @@
+[
+  {
+    "caseId": "chf-frank-starling",
+    "caseTitle": "Dyspnea on Exertion",
+    "system": "Cardiovascular",
+    "topic": "Frank-Starling / Cardiac Output",
+    "origQuestionId": "1A",
+    "vignette": "A 68-year-old patient with ischemic cardiomyopathy comes to the hospital because of worsening shortness of breath on exertion over the past week. On examination there is 2+ pitting edema to the knees, distended neck veins, and crackles at both lung bases. Echocardiography shows a left ventricular ejection fraction of 30 percent (reduced), and the N-terminal pro b-type natriuretic peptide (NT-proBNP) is 5,800 pg/mL (elevated).",
+    "leadIn": "Which of the following best describes this patient's left ventricular end-diastolic volume and its mechanism?",
+    "options": [
+      "Increased, because reflex sodium and water retention raises venous return and ventricular filling",
+      "Increased, because a faster heart rate lengthens the time available for ventricular filling each beat",
+      "Decreased, because the failing ventricle empties incompletely and accepts less inflow during diastole",
+      "Decreased, because elevated natriuretic peptide levels promote diuresis and lower circulating volume",
+      "Unchanged, because preserved sodium balance keeps circulating volume and ventricular filling constant"
+    ],
+    "answerIndex": 0,
+    "explanation": "In decompensated heart failure the reduced cardiac output activates the renin-angiotensin-aldosterone system and the sympathetic nervous system, driving sodium and water retention. Venous return and end-diastolic volume rise, so the ventricle is overfilled. The distended neck veins and peripheral edema are the clinical signs of this volume overload."
+  },
+  {
+    "caseId": "chf-frank-starling",
+    "caseTitle": "Dyspnea on Exertion",
+    "system": "Cardiovascular",
+    "topic": "Frank-Starling / Cardiac Output",
+    "origQuestionId": "1B",
+    "vignette": "A 68-year-old patient with ischemic cardiomyopathy comes to the hospital because of worsening shortness of breath on exertion. Examination shows 2+ pitting edema to the knees, distended neck veins, and crackles at both lung bases, consistent with an elevated left ventricular end-diastolic volume. Echocardiography shows a left ventricular ejection fraction of 30 percent (reduced), and the N-terminal pro b-type natriuretic peptide (NT-proBNP) is 5,800 pg/mL (elevated).",
+    "leadIn": "Which of the following best describes where this patient is operating on the Frank-Starling relationship?",
+    "options": [
+      "On the flat portion, where further filling now yields little additional stroke volume",
+      "On the flat portion, where rising filling now lowers stroke volume below its resting value",
+      "On the ascending portion, where added filling continues to raise stroke volume substantially",
+      "On the ascending portion, where greater sarcomere stretch keeps lifting stroke volume",
+      "At the peak, where stroke volume has reached the maximum value the curve allows"
+    ],
+    "answerIndex": 0,
+    "explanation": "In decompensated heart failure the ventricle operates on a depressed, flattened Frank-Starling curve. At a high end-diastolic volume, more filling produces little additional stroke volume, so the patient sits on the flat portion: volume overloaded yet still low output. A true descending limb, where more filling actually lowers output, is not seen in the intact heart, so this is a plateau rather than a downslope."
+  },
+  {
+    "caseId": "chf-frank-starling",
+    "caseTitle": "Dyspnea on Exertion",
+    "system": "Cardiovascular",
+    "topic": "Frank-Starling / Cardiac Output",
+    "origQuestionId": "1C",
+    "vignette": "A 68-year-old patient with ischemic cardiomyopathy is admitted with worsening shortness of breath on exertion. Examination shows 2+ pitting edema, distended neck veins, and crackles at both lung bases, and the left ventricular end-diastolic volume is elevated. The left ventricular ejection fraction is 30 percent (reduced). The patient is given furosemide (a diuretic) 80 mg intravenously, and over the next hours the dyspnea improves.",
+    "leadIn": "Which of the following best explains the change in stroke volume after furosemide is given?",
+    "options": [
+      "Stroke volume rises, because lower filling moves the ventricle onto the ascending portion of the curve",
+      "Stroke volume rises, because the diuretic raises contractility and lifts the entire Frank-Starling curve",
+      "Stroke volume falls, because reducing preload lowers output even on a depressed curve",
+      "Stroke volume falls, because the drop in circulating volume cuts venous return faster than the heart adjusts",
+      "Stroke volume is unchanged, because diuresis affects congestion but not the force of each contraction"
+    ],
+    "answerIndex": 0,
+    "explanation": "When the ventricle is volume overloaded it sits on the flat portion of the Frank-Starling curve, where extra preload mainly adds congestion. Furosemide lowers the end-diastolic volume and moves the patient onto the ascending portion, so the same ventricle ejects more and both stroke volume and cardiac output rise. The curve itself does not move; only inotropes or sympathetic tone do that."
+  },
+  {
+    "caseId": "hemorrhagic-shock",
+    "caseTitle": "Trauma Bay: Hemorrhagic Shock",
+    "system": "Cardiovascular",
+    "topic": "Compensatory Responses / Cardiac Output",
+    "origQuestionId": "1A",
+    "vignette": "A 24-year-old patient arrives by ambulance after a high-speed motor vehicle collision. The heart rate is 128/min, blood pressure is 84/52 mmHg, and respiratory rate is 24/min, and the patient is confused. The abdomen is rigid, and the estimated blood loss is 1.5 liters, roughly a quarter of the circulating volume.",
+    "leadIn": "Which of the following best describes the immediate effect of the blood loss on left ventricular end-diastolic volume?",
+    "options": [
+      "Decreased, because the lost blood volume lowers venous return and ventricular filling",
+      "Decreased, because antidiuretic hormone release directly reduces ventricular filling each beat",
+      "Increased, because sympathetic venoconstriction shifts reservoir blood to the heart and overfills it",
+      "Increased, because rapid fluid movement from the tissues refills the circulation within seconds",
+      "Unchanged, because reflex tachycardia preserves ventricular filling despite the volume loss"
+    ],
+    "answerIndex": 0,
+    "explanation": "Blood loss directly lowers circulating volume, which reduces venous return and end-diastolic volume and moves the patient leftward on a normal Frank-Starling curve, lowering stroke volume. Sympathetic venoconstriction helps a little but cannot replace 1.5 liters, which is more than a quarter of the blood volume."
+  },
+  {
+    "caseId": "hemorrhagic-shock",
+    "caseTitle": "Trauma Bay: Hemorrhagic Shock",
+    "system": "Cardiovascular",
+    "topic": "Compensatory Responses / Cardiac Output",
+    "origQuestionId": "1B",
+    "vignette": "A 24-year-old patient arrives by ambulance after a high-speed motor vehicle collision. The heart rate is 128/min, blood pressure is 84/52 mmHg, and respiratory rate is 24/min, and the patient is confused. The abdomen is rigid, and the estimated blood loss is 1.5 liters.",
+    "leadIn": "Which of the following best explains the mechanism of this patient's heart rate of 128/min?",
+    "options": [
+      "Baroreceptors sense the reduced arterial stretch and raise sympathetic output to the sinoatrial node",
+      "Atrial stretch receptors sense reduced filling and speed the heart through the Bainbridge reflex",
+      "Peripheral chemoreceptors sense reduced oxygen delivery and accelerate the sinoatrial node directly",
+      "Carotid bodies sense the rising lactate level and drive the sinoatrial node through beta-1 receptors",
+      "Aortic stretch receptors sense the lower wall tension and inhibit vagal tone at the atrioventricular node"
+    ],
+    "answerIndex": 0,
+    "explanation": "Baroreceptors in the aortic arch and carotid sinus sense the fall in mean arterial pressure, reduce vagal tone, and increase sympathetic output, which drives beta-1 receptors at the sinoatrial node and raises the heart rate. The Bainbridge reflex works in the opposite direction, when volume loading stretches the atria."
+  },
+  {
+    "caseId": "hemorrhagic-shock",
+    "caseTitle": "Trauma Bay: Hemorrhagic Shock",
+    "system": "Cardiovascular",
+    "topic": "Compensatory Responses / Cardiac Output",
+    "origQuestionId": "1C",
+    "vignette": "A 24-year-old patient arrives by ambulance after a high-speed motor vehicle collision with an estimated blood loss of 1.5 liters. The heart rate is 128/min, blood pressure remains 84/52 mmHg, respiratory rate is 24/min, and the patient is confused. The abdomen is rigid.",
+    "leadIn": "Which of the following best explains why the tachycardia fails to maintain this patient's blood pressure?",
+    "options": [
+      "Cardiac output is heart rate times stroke volume. The low stroke volume keeps the product inadequate",
+      "The faster heart rate shortens diastolic filling time so much that end-diastolic volume drops below a safe threshold",
+      "Catecholamine stores are exhausted by the ongoing bleeding, which limits the sympathetic response",
+      "Acidosis from the blood loss relaxes the arterioles. Systemic vascular resistance falls toward zero",
+      "Vagal tone rebounds at high heart rates, which blunts the contractile response to sympathetic drive"
+    ],
+    "answerIndex": 0,
+    "explanation": "Cardiac output is heart rate times stroke volume. Tachycardia raises the rate, but preload is so depleted that stroke volume is critically low, and the product still cannot maintain pressure. Systemic vascular resistance is actually high from vasoconstriction. Volume replacement is the definitive treatment because the underlying problem is the loss of circulating volume."
+  },
+  {
+    "caseId": "aortic-stenosis",
+    "caseTitle": "Syncope on Exertion",
+    "system": "Cardiovascular",
+    "topic": "Afterload / Pressure Overload",
+    "origQuestionId": "1A",
+    "vignette": "A 74-year-old patient reports fainting during a morning walk and three months of breathlessness and chest pressure on exertion. On examination there is a harsh crescendo-decrescendo systolic murmur at the right upper sternal border that radiates to the carotids, with a slow-rising, weak carotid pulse. Echocardiography shows an aortic valve area of 0.7 cm2, a mean gradient of 52 mmHg, and a left ventricular ejection fraction of 55 percent. The chronic pressure overload raises left ventricular afterload.",
+    "leadIn": "Which of the following best describes how the left ventricle adapts to this chronic pressure overload?",
+    "options": [
+      "Concentric hypertrophy, adding sarcomeres in parallel to thicken the wall and normalize wall stress",
+      "Eccentric hypertrophy, adding sarcomeres in series so the chamber enlarges to hold more volume each beat",
+      "Chamber dilation, stretching the ventricle to recruit more force on each beat",
+      "A faster resting heart rate that keeps output up as each stroke volume falls",
+      "Patchy fibrosis that stiffens the wall while leaving chamber size and thickness unchanged"
+    ],
+    "answerIndex": 0,
+    "explanation": "Pressure overload drives concentric hypertrophy: sarcomeres are added in parallel, the wall thickens without the chamber enlarging, and by the Laplace relationship the thicker wall brings wall stress back toward normal despite the high pressure. Eccentric hypertrophy, with sarcomeres in series and an enlarged chamber, is the response to volume overload such as aortic regurgitation."
+  },
+  {
+    "caseId": "aortic-stenosis",
+    "caseTitle": "Syncope on Exertion",
+    "system": "Cardiovascular",
+    "topic": "Afterload / Pressure Overload",
+    "origQuestionId": "1B",
+    "vignette": "A 74-year-old patient reports fainting during a morning walk and three months of breathlessness on exertion. On examination there is a harsh crescendo-decrescendo systolic murmur at the right upper sternal border that radiates to the carotids, with a slow-rising, weak carotid pulse. Echocardiography shows an aortic valve area of 0.7 cm2, a mean gradient of 52 mmHg, and a left ventricular ejection fraction of 55 percent. Symptoms occur with exertion but not at rest.",
+    "leadIn": "Which of the following best explains why this patient faints on exertion rather than at rest?",
+    "options": [
+      "Output is fixed by the obstruction. When exercise drops systemic vascular resistance, the brain is underperfused",
+      "Exertion causes demand ischemia in the thickened muscle, which triggers a brief self-limited arrhythmia and a faint",
+      "The faster heart rate during exercise shortens diastolic filling so much that end-diastolic volume drops below a safe threshold",
+      "Exercise provokes a reflex vagal surge from overstretched mechanoreceptors in the thick ventricular wall",
+      "Exertional hyperventilation lowers carbon dioxide and constricts cerebral vessels enough to cut brain perfusion"
+    ],
+    "answerIndex": 0,
+    "explanation": "This degree of aortic stenosis is a fixed obstruction, so at rest output is adequate but it cannot rise on demand. During exercise the skeletal muscle beds vasodilate and systemic vascular resistance falls. Mean arterial pressure equals cardiac output times systemic vascular resistance, so with output fixed and resistance falling the pressure drops, cerebral perfusion falls, and the patient faints."
+  },
+  {
+    "caseId": "aortic-stenosis",
+    "caseTitle": "Syncope on Exertion",
+    "system": "Cardiovascular",
+    "topic": "Afterload / Pressure Overload",
+    "origQuestionId": "1C",
+    "vignette": "A 74-year-old patient reports three months of breathlessness and chest pressure on exertion and one episode of fainting during a walk. On examination there is a harsh crescendo-decrescendo systolic murmur at the right upper sternal border that radiates to the carotids, with a slow-rising, weak carotid pulse. Echocardiography shows an aortic valve area of 0.7 cm2, a mean gradient of 52 mmHg, and a left ventricular ejection fraction of 55 percent, which is normal.",
+    "leadIn": "Which of the following best explains this patient's breathlessness despite a normal ejection fraction?",
+    "options": [
+      "The thick, stiff ventricle resists filling. High filling pressures back up into the lungs",
+      "The high afterload reduces forward stroke volume. That fall in output drives the pulmonary congestion",
+      "The thick ventricle displaces the mitral valve and causes regurgitation that raises pulmonary venous pressure",
+      "An ejection fraction of 55 percent is below normal for this age. The breathlessness reflects hidden systolic failure",
+      "The hypertrophied muscle outstrips its blood supply. The resulting ischemia weakens systolic emptying"
+    ],
+    "answerIndex": 0,
+    "explanation": "Concentric hypertrophy stiffens the ventricle, so it relaxes and fills poorly. To fill adequately it needs high pressures, and those pressures transmit back to the left atrium and pulmonary veins, causing congestion and breathlessness even though the ejection fraction is normal. This is heart failure with preserved ejection fraction: systolic function is fine, diastolic function is impaired."
+  },
+  {
+    "caseId": "oxyhemoglobin-dissociation",
+    "caseTitle": "Oxygen Delivery in Sepsis",
+    "system": "Respiratory / Transport",
+    "topic": "Oxygen-Hemoglobin Dissociation",
+    "origQuestionId": "1A",
+    "vignette": "A 64-year-old patient is admitted with sepsis from pneumonia. Temperature is 39.5 degrees Celsius, heart rate is 118/min, and blood pressure is 92/54 mmHg. An arterial blood gas shows a pH of 7.28 (acidotic) with an elevated arterial partial pressure of carbon dioxide (PaCO2), and the lactate is 5 mmol/L (elevated). Arterial oxygen saturation is 95 percent on supplemental oxygen.",
+    "leadIn": "Which of the following best describes the effect of these conditions on the oxygen-hemoglobin dissociation curve?",
+    "options": [
+      "A leftward shift, raising hemoglobin's affinity so it holds oxygen more tightly",
+      "A leftward shift, lowering hemoglobin's affinity so it releases oxygen more readily",
+      "A rightward shift, raising hemoglobin's affinity so it holds oxygen more tightly",
+      "A rightward shift, lowering hemoglobin's affinity so it unloads oxygen more readily",
+      "No change, because affinity is fixed once hemoglobin is fully formed"
+    ],
+    "answerIndex": 3,
+    "explanation": "Fever, a low pH, a high partial pressure of carbon dioxide, and a high 2,3-bisphosphoglycerate (2,3-BPG) all lower hemoglobin's affinity for oxygen and shift the curve to the right. This is the Bohr effect. A right shift means that at the same oxygen tension hemoglobin carries a little less oxygen, so it unloads more to the tissues."
+  },
+  {
+    "caseId": "oxyhemoglobin-dissociation",
+    "caseTitle": "Oxygen Delivery in Sepsis",
+    "system": "Respiratory / Transport",
+    "topic": "Oxygen-Hemoglobin Dissociation",
+    "origQuestionId": "1B",
+    "vignette": "A 64-year-old patient is admitted with sepsis from pneumonia. Temperature is 39.5 degrees Celsius, heart rate is 118/min, and blood pressure is 92/54 mmHg. An arterial blood gas shows a pH of 7.28 (acidotic) with an elevated arterial partial pressure of carbon dioxide (PaCO2), and the lactate is 5 mmol/L (elevated). The fever, acidosis, and high carbon dioxide have shifted the oxygen-hemoglobin dissociation curve to the right.",
+    "leadIn": "Which of the following best describes what this rightward shift does at the tissues?",
+    "options": [
+      "Hemoglobin releases more oxygen at the tissue oxygen level, improving delivery where it is needed",
+      "Hemoglobin binds oxygen more tightly at the tissue level. Less of it reaches the tissues",
+      "Hemoglobin delivers the same amount of oxygen, because lung saturation alone sets tissue delivery",
+      "Hemoglobin delivers less oxygen, because a right shift lowers saturation everywhere by an equal amount",
+      "Hemoglobin delivers less oxygen, because the shift mainly affects loading rather than unloading"
+    ],
+    "answerIndex": 0,
+    "explanation": "A right shift lowers oxygen affinity, so at the tissue oxygen tension hemoglobin gives up more oxygen. In a hypermetabolic, febrile, acidotic patient this is useful, because the tissues with the highest oxygen demand are exactly the warm, acidic, carbon-dioxide-rich beds where the curve shifts most and extra unloading helps."
+  },
+  {
+    "caseId": "oxyhemoglobin-dissociation",
+    "caseTitle": "Oxygen Delivery in Sepsis",
+    "system": "Respiratory / Transport",
+    "topic": "Oxygen-Hemoglobin Dissociation",
+    "origQuestionId": "1C",
+    "vignette": "A 64-year-old patient is admitted with sepsis from pneumonia. Temperature is 39.5 degrees Celsius, heart rate is 118/min, and blood pressure is 92/54 mmHg. An arterial blood gas shows a pH of 7.28 (acidotic) with an elevated arterial partial pressure of carbon dioxide (PaCO2). The fever and acidosis have shifted the oxygen-hemoglobin dissociation curve to the right, yet the arterial oxygen saturation remains 95 percent on supplemental oxygen.",
+    "leadIn": "Which of the following best explains why arterial saturation stays near normal in the lungs despite the rightward shift?",
+    "options": [
+      "The lungs work on the flat upper plateau, where a high oxygen tension loads hemoglobin nearly fully",
+      "The rightward shift reaches only the peripheral tissues and spares the pulmonary capillaries entirely",
+      "The supplemental oxygen fully reverses the rightward shift within the pulmonary capillaries",
+      "The blood moves through the lungs too quickly for the rightward shift to take effect",
+      "The rightward shift raises affinity again once the oxygen tension is high in the lungs"
+    ],
+    "answerIndex": 0,
+    "explanation": "The upper part of the dissociation curve is flat: above an oxygen tension of about 60 mmHg, hemoglobin is almost fully saturated, so even with a right shift the lungs still load oxygen well. The shift matters on the steep part of the curve, at the tissues, where it helps unloading. Arterial saturation can look nearly normal while delivery to the tissues actually improves."
+  },
+  {
+    "caseId": "cardio-baroreceptor",
+    "caseTitle": "Lightheaded on Standing",
+    "system": "Cardiovascular",
+    "topic": "Baroreceptor Reflex",
+    "origQuestionId": "1A",
+    "vignette": "A 19-year-old patient comes to the physician because of recurrent lightheadedness for 2 weeks. The episodes last several seconds and occur immediately on standing. There is no chest pain, palpitations, or loss of consciousness. While lying down, blood pressure is 118/74 mmHg and pulse is 70/min. One minute after standing, blood pressure is 102/66 mmHg and pulse is 92/min. The carotid baroreceptors sense the drop in pressure on standing.",
+    "leadIn": "Which of the following is the most likely mechanism restoring this patient's blood pressure?",
+    "options": [
+      "Increased heart rate from greater sympathetic outflow and arteriolar constriction",
+      "Increased heart rate from greater parasympathetic outflow and arteriolar dilation",
+      "Decreased heart rate from greater parasympathetic outflow and arteriolar constriction",
+      "Decreased heart rate from reduced sympathetic outflow and arteriolar dilation",
+      "Decreased heart rate from greater sympathetic outflow and arteriolar constriction"
+    ],
+    "answerIndex": 0,
+    "explanation": "When blood pressure falls on standing, the carotid baroreceptors fire less, which releases the brainstem's brake on the sympathetic nervous system. Sympathetic outflow rises and parasympathetic (vagal) outflow drops, so the heart rate climbs and the arterioles constrict. Together that raises cardiac output and systemic vascular resistance and brings the blood pressure back up. This is the same reflex that fails in orthostatic hypotension."
+  },
+  {
+    "caseId": "cardio-coronary-diastole",
+    "caseTitle": "Chest Pressure on the Stairs",
+    "system": "Cardiovascular",
+    "topic": "Coronary Perfusion",
+    "origQuestionId": "1A",
+    "vignette": "A 61-year-old patient comes to the physician because of substernal chest pressure for 3 months. The pressure occurs with exertion, such as climbing two flights of stairs, and resolves with rest within several minutes. The patient has high blood pressure and high cholesterol. A resting electrocardiogram shows no abnormalities. During exercise stress testing, the chest pressure recurs as the heart rate reaches 140/min. The left ventricular muscle is perfused mainly during diastole, when it is relaxed.",
+    "leadIn": "Which of the following best explains the decrease in myocardial oxygen supply during exercise?",
+    "options": [
+      "Increased coronary blood flow because systole lengthens and forces more blood through",
+      "Increased coronary blood flow because diastole lengthens and filling time rises",
+      "Decreased coronary blood flow because diastole shortens and filling time falls",
+      "Decreased coronary blood flow because systole shortens and the arteries collapse",
+      "Decreased coronary blood flow because systole lengthens and compresses the vessels longer"
+    ],
+    "answerIndex": 2,
+    "explanation": "As the heart rate rises, diastole shortens far more than systole does. Because the left ventricular muscle is perfused mainly during diastole, that shorter window reduces coronary blood flow just as the working muscle needs more oxygen. A fixed narrowing from coronary artery disease cannot make up the difference, so demand outstrips supply and angina results."
+  },
+  {
+    "caseId": "cardio-hyperkalemia",
+    "caseTitle": "Weakness After Missed Dialysis",
+    "system": "Cardiovascular",
+    "topic": "Potassium and Membrane Potential",
+    "origQuestionId": "1A",
+    "vignette": "A 55-year-old patient with end-stage kidney disease who missed two hemodialysis sessions comes to the emergency department because of generalized muscle weakness. Pulse is 58/min and irregular. Serum studies show a potassium concentration of 7.0 mEq/L (elevated). An electrocardiogram shows tall, peaked T waves. The resting membrane potential of cardiac cells is set mainly by the potassium gradient across the cell membrane.",
+    "leadIn": "Which of the following best describes the effect of the elevated extracellular potassium on the resting membrane potential of the patient's cardiac cells?",
+    "options": [
+      "More negative, because the potassium gradient across the membrane rises",
+      "More negative, because potassium leaves the cell more rapidly at rest",
+      "Less negative, because the potassium gradient across the membrane falls",
+      "Less negative, because sodium enters the cell more rapidly at rest",
+      "Unchanged, because the chloride gradient compensates for the shift"
+    ],
+    "answerIndex": 2,
+    "explanation": "Raising potassium outside the cell shrinks the chemical gradient that drives potassium out at rest. With less potassium leaving, the resting membrane potential drifts less negative, and the cell sits partly depolarized. That sustained depolarization inactivates fast sodium channels and lengthens their recovery, which slows conduction. On the electrocardiogram (ECG) this shows up first as tall, peaked T waves and, if potassium keeps climbing, as loss of the P wave and a widening QRS complex that can progress to a sine-wave pattern."
+  },
+  {
+    "caseId": "heme-iron-deficiency",
+    "caseTitle": "Fatigue and Heavy Periods",
+    "system": "Hematology",
+    "topic": "Iron-Deficiency Anemia",
+    "origQuestionId": "1A",
+    "vignette": "A 34-year-old patient comes to the physician because of fatigue for 3 months and a 1-year history of heavy menstrual bleeding. Examination shows pale conjunctivae. Laboratory studies show a hemoglobin concentration of 9.1 g/dL (low) and a mean corpuscular volume of 71 fL (low); the peripheral blood smear shows small, pale red blood cells. Iron is a required building block for hemoglobin.",
+    "leadIn": "Which of the following best explains the small, pale appearance of the patient's red blood cells?",
+    "options": [
+      "Hemoglobin production falls. Precursors divide extra times and stay small",
+      "Hemoglobin production falls. Cells retain their nucleus and are released large",
+      "Hemoglobin production rises. Cells fill early and appear small and dark",
+      "Hemoglobin production rises. Iron accumulates within the enlarged cells",
+      "Membrane protein production falls. Cells lose surface area and appear pale"
+    ],
+    "answerIndex": 0,
+    "explanation": "Developing red cells stop dividing once they reach a target hemoglobin concentration. When iron is limited, hemoglobin accumulates slowly, and the precursors undergo one or more extra divisions before that target is reached. The result is cells that are both smaller than normal (microcytic) and low in hemoglobin (hypochromic). This is the characteristic picture of iron-deficiency anemia, and it explains the low mean corpuscular volume."
+  },
+  {
+    "caseId": "heme-b12-macrocytic",
+    "caseTitle": "Fatigue and Tingling Feet",
+    "system": "Hematology",
+    "topic": "Megaloblastic Anemia",
+    "origQuestionId": "1A",
+    "vignette": "A 70-year-old patient comes to the physician because of fatigue and tingling of both feet for 4 months. Laboratory studies show a hemoglobin concentration of 10.0 g/dL (low) and a mean corpuscular volume of 112 fL (high); the peripheral blood smear shows hypersegmented neutrophils with extra nuclear lobes. Vitamin B12, also called cobalamin, is required for DNA synthesis in dividing cells.",
+    "leadIn": "Which of the following imbalances best explains the increased size of the patient's red blood cells?",
+    "options": [
+      "DNA synthesis outpaces cytoplasm growth. The nucleus matures before each division",
+      "DNA synthesis outpaces hemoglobin formation. The cells are released early",
+      "DNA synthesis lags behind cytoplasm growth. The cells enlarge before they divide",
+      "DNA synthesis lags behind iron uptake. The cells store extra hemoglobin",
+      "DNA synthesis lags behind membrane assembly. The cells rupture early"
+    ],
+    "answerIndex": 2,
+    "explanation": "Vitamin B12 deficiency slows DNA synthesis, and nuclear maturation stalls while the cytoplasm continues to accumulate ribonucleic acid (RNA) and protein. This nuclear-cytoplasmic asynchrony means the precursor divides fewer times and enlarges, and it is released as an oversized red cell (macrocyte) with a high mean corpuscular volume. The same defect in granulocyte precursors produces hypersegmented neutrophils, a hallmark of megaloblastic anemia."
+  },
+  {
+    "caseId": "heme-epo-ckd",
+    "caseTitle": "Anemia in Kidney Disease",
+    "system": "Hematology",
+    "topic": "Erythropoietin",
+    "origQuestionId": "1A",
+    "vignette": "A 60-year-old patient with type 2 diabetes and chronic kidney disease comes to the physician because of fatigue that has worsened gradually over 1 year. Laboratory studies show a hemoglobin concentration of 9.5 g/dL (low), a normal mean corpuscular volume, and a low reticulocyte count. Serum iron, vitamin B12, and folate concentrations are within the normal range. The kidney is the main source of the hormone that signals the bone marrow to make red blood cells.",
+    "leadIn": "Which of the following is the most likely cause of the patient's anemia?",
+    "options": [
+      "Erythropoietin falls. Red cells survive longer while the marrow makes few",
+      "Erythropoietin falls. The marrow loses its drive to form red cells",
+      "Erythropoietin rises. Iron is diverted away from developing red cells",
+      "Erythropoietin rises. The marrow makes fragile cells that break apart",
+      "Erythropoietin rises. Red cells are destroyed faster than they form"
+    ],
+    "answerIndex": 1,
+    "explanation": "Most erythropoietin is produced by specialized interstitial cells in the kidney, which release it through the hypoxia-inducible factor pathway when oxygen delivery falls. As kidney tissue is lost, erythropoietin production falls and the marrow loses its main signal to make red blood cells. The result is a normocytic anemia with a low reticulocyte count even though iron and vitamins are adequate, which is why erythropoiesis-stimulating agents treat the anemia of chronic kidney disease."
+  },
+  {
+    "caseId": "pulm-surfactant",
+    "caseTitle": "The Premature Newborn",
+    "system": "Respiratory",
+    "topic": "Surfactant and Laplace's Law",
+    "origQuestionId": "1A",
+    "vignette": "A newborn delivered at 29 weeks of gestation develops rapid breathing, grunting, and nasal flaring within hours of birth. Oxygen saturation is low. A chest radiograph shows diffuse, hazy lung fields with low lung volumes. Pulmonary surfactant, which lowers the surface tension inside alveoli, is produced late in pregnancy, and a newborn delivered this early has little of it.",
+    "leadIn": "Which of the following best explains the patient's tendency toward alveolar collapse?",
+    "options": [
+      "Surface tension rises. Small alveoli tend to collapse and are hard to reopen",
+      "Surface tension rises. The alveoli overexpand and trap air at end-expiration",
+      "Surface tension rises. Airway resistance increases and exhalation slows",
+      "Surface tension falls. The alveoli collapse and gas exchange drops",
+      "Surface tension falls. The alveoli stiffen and resist inflation"
+    ],
+    "answerIndex": 0,
+    "explanation": "By the Law of Laplace, the collapsing pressure of a sphere is P = 2T/r, so for a fixed surface tension that pressure rises as the alveolus gets smaller. Surfactant, made by type II pneumocytes, lowers surface tension and does so most in the smallest alveoli, which keeps them from emptying into larger ones. Without enough surfactant the tension stays high, the small alveoli collapse, and each breath takes a large pressure to reopen them. That is the mechanism of neonatal respiratory distress syndrome (RDS)."
+  },
+  {
+    "caseId": "pulm-vq-mismatch",
+    "caseTitle": "Pneumonia and Low Oxygen",
+    "system": "Respiratory",
+    "topic": "Ventilation-Perfusion Mismatch",
+    "origQuestionId": "1A",
+    "vignette": "A 72-year-old patient comes to the emergency department because of fever, productive cough, and shortness of breath for 3 days. Temperature is 38.9 degrees Celsius, respirations are 26/min, and oxygen saturation is 86 percent on room air, which is low. A chest radiograph shows consolidation of the right lower lobe. In the affected lobe, the alveoli are filled with inflammatory fluid while blood continues to flow past them.",
+    "leadIn": "Which of the following best explains the patient's low arterial oxygen level?",
+    "options": [
+      "The ventilation-perfusion (V/Q) ratio rises. Blood leaves that region overoxygenated",
+      "The ventilation-perfusion (V/Q) ratio rises. Dead space grows and oxygen falls",
+      "The ventilation-perfusion (V/Q) ratio rises. Carbon dioxide alone is retained",
+      "The ventilation-perfusion (V/Q) ratio falls. Blood passes without being oxygenated",
+      "The ventilation-perfusion (V/Q) ratio falls. The airways narrow and trap air"
+    ],
+    "answerIndex": 3,
+    "explanation": "Ventilation (airflow) and perfusion (blood flow) must be matched for gas exchange. When alveoli fill with fluid but blood still flows past, ventilation falls while perfusion continues, so the ventilation-perfusion (V/Q) ratio drops toward zero. That blood returns to the body still poorly oxygenated and lowers the arterial oxygen level. A useful distinction is that a low V/Q region still has some ventilation and responds to supplemental oxygen, while a region with no ventilation at all is a true shunt and responds only partly."
+  },
+  {
+    "caseId": "pulm-hypoventilation",
+    "caseTitle": "Opioid Overdose",
+    "system": "Respiratory",
+    "topic": "Hypoventilation",
+    "origQuestionId": "1A",
+    "vignette": "A 28-year-old patient is brought to the emergency department after an overdose of an opioid pain medicine. The patient is minimally responsive, with breathing that is slow at 6/min and shallow. Arterial blood gas analysis shows a high carbon dioxide level and a low oxygen level. A chest radiograph shows no abnormalities, so the lungs appear normal on imaging.",
+    "leadIn": "Which of the following best explains the patient's arterial blood gas findings?",
+    "options": [
+      "Alveolar ventilation falls. Carbon dioxide builds up and displaces alveolar oxygen",
+      "Alveolar ventilation falls. Blood shunts past collapsed alveoli",
+      "Alveolar ventilation falls. The alveolar-arterial oxygen gradient widens",
+      "Alveolar ventilation rises. Excess carbon dioxide is blown off and alveolar oxygen falls",
+      "Alveolar ventilation rises. Oxygen is diluted within the alveoli"
+    ],
+    "answerIndex": 0,
+    "explanation": "Opioids blunt the brainstem drive to breathe, and alveolar ventilation falls. Carbon dioxide is normally cleared in proportion to ventilation, so it accumulates in the alveoli and the blood, raising the partial pressure of carbon dioxide (PaCO2) and lowering the pH toward an acute respiratory acidosis. By the alveolar gas equation, rising alveolar carbon dioxide takes up space that oxygen would occupy, and the alveolar and arterial oxygen both fall. Because the lung itself is healthy, oxygen still crosses normally and the alveolar-arterial (A-a) oxygen gradient stays normal, which points to hypoventilation rather than a lung problem."
+  },
+  {
+    "caseId": "",
+    "caseTitle": "",
+    "system": "Communication",
+    "topic": "Empathy & Communication",
+    "origQuestionId": "EMP1",
+    "vignette": "A 58-year-old patient with newly diagnosed metastatic pancreatic cancer is admitted for pain control. On morning rounds the patient becomes tearful and says, \"I don't think I can do chemotherapy. I'm just so tired.\"",
+    "leadIn": "Which of the following is the most appropriate initial response by the physician?",
+    "options": [
+      "Let me walk you through what chemotherapy would actually involve.",
+      "It sounds like this feels overwhelming. Tell me more about that.",
+      "Most patients feel this way at first and still do very well.",
+      "I can ask the palliative care team to come by and see you.",
+      "Staying hopeful for your family will help you get through this."
+    ],
+    "answerIndex": "1",
+    "explanation": "When a patient expresses strong emotion, the first step is to acknowledge and explore it before giving information or solving the problem. Option B names the feeling and invites the patient to say more, which is the core of an empathic response (the NURSE framework: Name, Understand, Respect, Support, Explore). Options A and D move prematurely to logistics, and options C and E offer reassurance that minimizes the emotion and tends to end the conversation."
+  }
+]

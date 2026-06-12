@@ -1,3 +1,4 @@
+import type { LearningPoint } from '../types'
 // ============================================================
 //  LEARNING POINTS - one distilled Anki card per question
 //
@@ -11,7 +12,7 @@
 //  no exaggeration. HTML <br> is allowed (Anki renders it).
 // ============================================================
 
-window.LEARNING_POINTS = {
+const _LP = {
 
   // ── Decompensated heart failure / Frank-Starling ──
   "chf-frank-starling:1A": {
@@ -260,3 +261,5 @@ window.LEARNING_POINTS = {
   },
 
 };
+
+export const LEARNING_POINTS = _LP as unknown as Record<string, LearningPoint>
