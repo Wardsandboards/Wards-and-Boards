@@ -15,6 +15,7 @@ import { AuthorsView } from './components/authors'
 import { AdminQueue, ContributorApplication, SignIn } from './components/auth'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
+import { googleEnabled, onGoogleSession, signInWithGoogle, signOutGoogle } from './auth/googleAuth'
 import type { AuthState, Author, ContribState, Draft, LintResult, PracticeItem, PracticeStore } from './types'
 
 type ProgressMap = Record<string, Record<string, boolean>>
@@ -54,7 +55,7 @@ export default function App() {
   const isContributor = !!me && me.role === 'contributor' && !!me.app && me.app.status === 'approved'
   const userName = (email: string) => { const u = auth.users[email]; return (u && u.name) || email || 'Wards & Boards editorial' }
   const signIn = (email: string, name: string) => setAuth((a) => { const u = { ...a.users }; if (!u[email]) u[email] = { name: name || email, email, role: 'learner', app: { status: 'none' } }; return { ...a, users: u, currentEmail: email } })
-  const signOut = () => { setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
+  const signOut = () => { if (googleEnabled) signOutGoogle(); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
   const applyContributor = (form: { training: string; institution: string; npi: string }) => setAuth((a) => {
     if (!a.currentEmail) return a
     const u = { ...a.users }
@@ -70,6 +71,10 @@ export default function App() {
     u[email] = decision === 'approve' ? { ...usr, role: 'contributor', app: { ...usr.app, status: 'approved' } } : { ...usr, app: { ...usr.app, status: 'denied' } }
     return { ...a, users: u }
   })
+
+  // When a real Supabase backend is configured, adopt the signed-in Google
+  // identity into the app's user model. No-op (and unsubscribes cleanly) on the mock.
+  useEffect(() => onGoogleSession((u) => { if (u && u.email) signIn(u.email, u.name) }), [])
 
   const cases = CASES.filter((c) => c.active !== false)
   const setProgress = (u: ProgressMap | ((p: ProgressMap) => ProgressMap)) => setProgressRaw((prev) => { const np = typeof u === 'function' ? u(prev) : u; saveLS('os_progress', np); return np })
@@ -279,9 +284,9 @@ export default function App() {
         onGetStarted={() => { if (me) { setActiveId(null); setMode('learn') } else setMode('signin') }}
         onGoLearn={() => { setActiveId(null); setMode('learn') }} onGoPractice={() => setMode('practice')} />}
 
-      {mode === 'signin' && <SignIn users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('home') }} />}
+      {mode === 'signin' && <SignIn users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('home') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />}
 
-      {mode === 'learn' && (!me ? <SignIn intent="Learn" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('learn') }} />
+      {mode === 'learn' && (!me ? <SignIn intent="Learn" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('learn') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />
         : caseData ? (
           <CaseView caseData={caseData} onBack={() => { setActiveId(null); setMode('learn') }} setProgress={setProgress}
             review={review} onToggleReview={toggleReview} answers={answers[caseData.id] || {}} setAnswers={setAnswers}
@@ -294,9 +299,9 @@ export default function App() {
           </div></section>
         ))}
 
-      {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} /> : <PracticeView />)}
+      {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} /> : <PracticeView />)}
 
-      {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} />
+      {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />
         : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication me={me} onApply={applyContributor} /></div></section>
           : <ContributeWorkspace />)}
 
