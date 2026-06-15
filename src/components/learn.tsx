@@ -218,7 +218,7 @@ function MechanismReveal({ mechanism }: { mechanism: Mechanism }) {
   )
 }
 
-export function CaseView({ caseData, onBack, setProgress, review, onToggleReview, answers, setAnswers, setReasonAnswer, onOpenAuthor }: {
+export function CaseView({ caseData, onBack, setProgress, review, onToggleReview, answers, setAnswers, setReasonAnswer, onOpenAuthor, onComplete }: {
   caseData: Case
   onBack: () => void
   setProgress: (u: (prev: ProgressMap) => ProgressMap) => void
@@ -228,6 +228,7 @@ export function CaseView({ caseData, onBack, setProgress, review, onToggleReview
   setAnswers: (id: string, pid: string, v: string) => void
   setReasonAnswer: (id: string, txt: string) => void
   onOpenAuthor: (a: Author) => void
+  onComplete?: (caseId: string, mode: string) => void
 }) {
   const [mode, setMode] = useState('ms1')
   const [showReveal, setShowReveal] = useState(false)
@@ -237,7 +238,7 @@ export function CaseView({ caseData, onBack, setProgress, review, onToggleReview
   const isRev = review.includes(caseData.id)
   const switchMode = (m: string) => { if (m === mode) return; setMode(m); setShowReveal(false); setSessionKey((k) => k + 1) }
   const restart = () => { setShowReveal(false); setSessionKey((k) => k + 1) }
-  const complete = () => { setShowReveal(true); setProgress((prev) => ({ ...prev, [caseData.id]: { ...(prev[caseData.id] || {}), [mode]: true } })) }
+  const complete = () => { setShowReveal(true); setProgress((prev) => ({ ...prev, [caseData.id]: { ...(prev[caseData.id] || {}), [mode]: true } })); onComplete?.(caseData.id, mode) }
   useEffect(() => { if (showReveal && revealRef.current) revealRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [showReveal])
   return (
     <section className="section" style={{ paddingTop: 30 }}><div className="wrap">
