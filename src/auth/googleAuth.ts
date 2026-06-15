@@ -13,7 +13,9 @@ export async function signInWithGoogle(): Promise<void> {
   if (!supabase) return
   await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin + window.location.pathname },
+    // Land back on the app root (now that routes have real paths); the session
+    // is restored from the URL and the user starts signed in on Home.
+    options: { redirectTo: window.location.origin + '/' },
   })
 }
 
