@@ -34,7 +34,7 @@ export function PrivacyView() {
     <LegalShell
       eyebrow="Privacy Policy"
       title={<>How Wards &amp; Boards handles your <em>data</em></>}
-      intro="This policy explains what information Wards & Boards collects, how it is used, and the choices you have. Wards & Boards is a free educational resource operated by an individual physician."
+      intro="This policy explains what information Wards & Boards collects, how it is used, and the choices you have. Wards & Boards is an educational resource operated by an individual physician."
     >
       <Block heading="Information we collect">
         <p style={para}><strong>Account information.</strong> When you sign in with Google, we receive your name, email address, and profile photo, and store them to create your account.</p>
@@ -84,10 +84,10 @@ export function TermsView() {
     <LegalShell
       eyebrow="Terms of Service"
       title={<>Terms of <em>use</em></>}
-      intro="These terms govern your use of Wards & Boards, a free educational resource. By using the site, you agree to them."
+      intro="These terms govern your use of Wards & Boards, an educational resource. By using the site, you agree to them."
     >
       <Block heading="What Wards & Boards is">
-        <p style={para}>Wards &amp; Boards is a free teaching resource that pairs clinical-physiology cases with board-style practice questions, written and reviewed by physicians. It is provided at no cost.</p>
+        <p style={para}>Wards &amp; Boards is a teaching resource that pairs clinical-physiology cases with board-style practice questions, written and reviewed by physicians. It is currently provided at no cost.</p>
       </Block>
 
       <Block heading="Who can use it">
@@ -103,7 +103,7 @@ export function TermsView() {
       </Block>
 
       <Block heading="Contributions">
-        <p style={para}>If you author or review questions, you confirm the work is your own and accurate to the best of your knowledge, and that it does not copy copyrighted material or infringe anyone's rights. You grant Wards &amp; Boards a non-exclusive, royalty-free license to publish, display, and distribute your contributions on the platform as part of the free question commons. You keep authorship credit on your published items.</p>
+        <p style={para}>If you author or review questions, you confirm the work is your own and accurate to the best of your knowledge, and that it does not copy copyrighted material or infringe anyone's rights. You grant Wards &amp; Boards a non-exclusive, royalty-free license to publish, display, and distribute your contributions on the platform as part of the question commons. You keep authorship credit on your published items.</p>
       </Block>
 
       <Block heading="Acceptable use">

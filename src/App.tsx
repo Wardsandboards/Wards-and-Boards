@@ -349,7 +349,7 @@ export default function App() {
               const text = lines.join('\n')
               return (
                 <div><div className="reveal-title">Citable contribution record</div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--mid)', margin: '6px 0 12px' }}>Every published item is a citable micro-publication, creditable to its author and both reviewers, the incentive that builds the bank for free.</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--mid)', margin: '6px 0 12px' }}>Every published item is a citable micro-publication, creditable to its author and both reviewers, the incentive that builds the bank through credit rather than cash.</p>
                   <pre className="os-pre">{text}</pre>
                   <button className="os-link" style={{ marginTop: 10 }} onClick={() => navigator.clipboard.writeText(text)}>Copy for CV</button></div>
               )
