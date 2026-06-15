@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wards and Boards">
-  <rect width="512" height="512" rx="112" fill="#2563eb" />
+  <rect width="512" height="512" fill="#2563eb" />
   <polygon points="256,116 344,278 168,278" fill="#ffffff" opacity="0.55" />
   <polygon points="168,278 344,278 408,396 104,396" fill="#ffffff" />
 </svg>
