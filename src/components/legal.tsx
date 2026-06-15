@@ -65,7 +65,7 @@ export function PrivacyView() {
       </Block>
 
       <Block heading="Who this is for">
-        <p style={para}>Wards &amp; Boards is intended for medical students, physicians, and other adult learners. It is not directed to children under 13, and we do not knowingly collect their information.</p>
+        <p style={para}>Wards &amp; Boards is intended for people in medical training or practice. It is not intended for the general public, and it is not for anyone under 18. We do not knowingly collect information from anyone under 18.</p>
       </Block>
 
       <Block heading="Changes to this policy">
@@ -88,6 +88,10 @@ export function TermsView() {
     >
       <Block heading="What Wards & Boards is">
         <p style={para}>Wards &amp; Boards is a free teaching resource that pairs clinical-physiology cases with board-style practice questions, written and reviewed by physicians. It is provided at no cost.</p>
+      </Block>
+
+      <Block heading="Who can use it">
+        <p style={para}>Wards &amp; Boards is intended for people in medical training or practice. It is not intended for the general public, and you must be at least 18 years old to use it.</p>
       </Block>
 
       <Block heading="Educational use only, not medical advice">
