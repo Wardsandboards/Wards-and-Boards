@@ -3,6 +3,18 @@ import { categoryOf } from '../src/constants'
 import { attributionFor, boardBankFromJson } from '../src/lib/questions'
 import { buildAnkiCard, ankiCard } from '../src/lib/anki'
 import { gradeAnswer } from '../src/lib/grade'
+import boardJson from '../src/data/questions.board.json'
+
+describe('board bank data integrity', () => {
+  it('every answerIndex is a real number within the options range', () => {
+    // Catches the string-typed answerIndex bug ("1" vs 1), which silently
+    // breaks correct-answer matching (1 === "1" is false).
+    const bad = (boardJson as unknown as { options: string[]; answerIndex: unknown }[])
+      .map((q, i) => ({ i, answerIndex: q.answerIndex, len: q.options.length }))
+      .filter((q) => typeof q.answerIndex !== 'number' || q.answerIndex < 0 || q.answerIndex >= q.len)
+    expect(bad).toEqual([])
+  })
+})
 
 describe('categoryOf', () => {
   it('maps systems to display categories', () => {
