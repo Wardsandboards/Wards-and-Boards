@@ -77,4 +77,33 @@ describe('contributor flow (mock backend)', () => {
     // Queue is now empty (the only applicant was approved).
     expect(screen.getByText(/No pending applications/)).toBeTruthy()
   })
+
+  it('publishes a question on the second approval and surfaces it in Practice', () => {
+    // Seed an in-review item that already has one approval (by Dr. Chen).
+    localStorage.setItem('os_contrib', JSON.stringify({
+      counter: 100,
+      qs: [{
+        id: 'c1', citableId: null, status: 'in_review', caseId: null, caseTitle: null,
+        level: 'step1', system: 'Cardiology', vignette: 'A 60-year-old patient with exertional dyspnea.',
+        leadIn: 'Which mechanism best explains the finding?', options: ['Alpha', 'Bravo', 'Charlie', 'Delta'],
+        answerIndex: 1, explanation: 'Bravo is correct because of preload.',
+        authorId: 'rivera@stanford.edu', reviews: [{ reviewerId: 'chen@stanford.edu', decision: 'approve' }],
+      }],
+    }))
+    render(<App />)
+
+    // A third contributor (not author, not prior reviewer) casts the 2nd approval.
+    navClick('Sign in')
+    fireEvent.click(screen.getByText('Dr. Okafor'))
+    navClick('Contribute')
+    fireEvent.click(screen.getByRole('button', { name: /Review queue/ }))
+    expect(screen.getByText(/1\/2 approvals/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
+
+    // It leaves the review queue and appears in the Practice bank as Community.
+    expect(screen.getByText(/Review queue is empty/)).toBeTruthy()
+    navClick('Practice')
+    expect(screen.getByText('A 60-year-old patient with exertional dyspnea.')).toBeTruthy()
+    expect(screen.getByText('Community')).toBeTruthy()
+  })
 })

@@ -16,14 +16,18 @@ export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpe
   const answered = picked !== undefined
   const correct = answered && picked === q.answerIndex
   const anki = ankiCard(q.qkey, { stem: q.vignette + '<br><br>' + q.leadIn, choices: q.options, correct: q.answerIndex, explanation: q.explanation })
-  const att = attributionFor(q)
+  // Community questions carry their real author/reviewer credit; the static bank
+  // falls back to the deterministic mock attribution. Real authors have no full
+  // profile page yet, so their byline is not clickable.
+  const att = q.attribution || attributionFor(q)
+  const onAuthor = q.attribution ? undefined : onOpenAuthor
   return (
     <div className="qblock">
       <div className="qid"><span className="os-badge src">{q.source}</span>{' '}
         <span className={'os-badge ' + (q.lint.ok ? 'ready' : 'polish')}>{q.lint.ok ? 'board-ready' : 'needs polish'}</span>
         <span style={{ color: 'var(--mid)', fontWeight: 700, letterSpacing: 0, textTransform: 'none', marginLeft: 6 }}>{q.system} · {q.topic}</span>
         <AnkiButton front={anki.front} back={anki.back} style={{ float: 'right' }} /></div>
-      <QByline att={att} onOpenAuthor={onOpenAuthor} />
+      <QByline att={att} onOpenAuthor={onAuthor} />
       <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{q.vignette}</div>
       <p className="qstem">{q.leadIn}</p>
       <div className="choices">{q.options.map((o, i) => {

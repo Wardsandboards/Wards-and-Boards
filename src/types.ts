@@ -150,6 +150,9 @@ export interface PracticeItem {
   source: string
   citableId?: string | null
   lint: LintResult
+  // Set for DB-published community questions: the real author + reviewer credits.
+  // When absent, the byline falls back to the deterministic mock attribution.
+  attribution?: Attribution
 }
 
 export interface PracticeAttempt {
