@@ -12,6 +12,9 @@ export interface DbProfile {
   id: string
   email: string | null
   full_name: string | null
+  display_name: string | null
+  bio: string | null
+  course_code: string | null
   role: string // 'learner' | 'contributor' | 'admin'
   app_status: string // 'none' | 'pending' | 'approved' | 'denied'
   training: string | null
@@ -19,7 +22,13 @@ export interface DbProfile {
   npi: string | null
 }
 
-const PROFILE_COLS = 'id, email, full_name, role, app_status, training, institution, npi'
+const PROFILE_COLS = 'id, email, full_name, display_name, bio, course_code, role, app_status, training, institution, npi'
+
+/** The display name to show for a user: their chosen name, else their Google name. */
+export function profileName(p: { display_name?: string | null; full_name?: string | null; email?: string | null } | null): string {
+  if (!p) return ''
+  return p.display_name || p.full_name || p.email || ''
+}
 
 async function currentUserId(): Promise<string | null> {
   if (!supabase) return null
@@ -57,6 +66,24 @@ export async function applyForContributor(form: { training: string; institution:
     const { data } = await supabase
       .from('profiles')
       .update({ app_status: 'pending', training: form.training, institution: form.institution, npi: form.npi })
+      .eq('id', uid)
+      .select(PROFILE_COLS)
+      .maybeSingle()
+    return (data as DbProfile) ?? null
+  } catch {
+    return null
+  }
+}
+
+/** Save the signed-in user's editable profile settings. Returns the updated row. */
+export async function updateProfileSettings(fields: { display_name: string; bio: string; course_code: string }): Promise<DbProfile | null> {
+  if (!supabase) return null
+  const uid = await currentUserId()
+  if (!uid) return null
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .update({ display_name: fields.display_name || null, bio: fields.bio || null, course_code: fields.course_code || null })
       .eq('id', uid)
       .select(PROFILE_COLS)
       .maybeSingle()
