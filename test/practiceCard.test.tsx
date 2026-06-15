@@ -32,6 +32,19 @@ describe('PracticeCard', () => {
     expect(screen.getByText('✗ Not quite')).toBeTruthy()
   })
 
+  it('embeds a YouTube explainer when the question has a video link', () => {
+    const withVideo: PracticeItem = { ...q, video: 'https://youtu.be/dQw4w9WgXcQ' }
+    const { container } = render(<PracticeCard q={withVideo} picked={2} onPick={noop} rated={0} onRate={noop} onGoCase={noop} />)
+    const iframe = container.querySelector('iframe') as HTMLIFrameElement
+    expect(iframe).toBeTruthy()
+    expect(iframe.src).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ')
+  })
+
+  it('renders no embed when there is no video link', () => {
+    const { container } = render(<PracticeCard q={q} picked={2} onPick={noop} rated={0} onRate={noop} onGoCase={noop} />)
+    expect(container.querySelector('iframe')).toBeNull()
+  })
+
   it('uses the real attribution for a community question and does not make it clickable', () => {
     const onOpenAuthor = vi.fn()
     const community: PracticeItem = {

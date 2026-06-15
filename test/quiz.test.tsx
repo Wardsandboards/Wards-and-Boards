@@ -40,4 +40,12 @@ describe('Quiz', () => {
     fireEvent.click(screen.getByText('alpha'))
     expect(submit.disabled).toBe(false)
   })
+
+  it('reports each answer via onAnswer keyed by case:question', () => {
+    const onAnswer = vi.fn()
+    render(<Quiz questions={questions} onComplete={() => {}} caseId="chf" onAnswer={onAnswer} />)
+    fireEvent.click(screen.getByText('charlie'))
+    fireEvent.click(screen.getByText('Submit Answer'))
+    expect(onAnswer).toHaveBeenCalledWith('chf:1A', false) // correct is 'bravo' (index 1)
+  })
 })

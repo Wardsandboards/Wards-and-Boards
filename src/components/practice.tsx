@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnkiButton, QByline } from './common'
 import { ankiCard } from '../lib/anki'
 import { attributionFor } from '../lib/questions'
+import { youtubeEmbedUrl } from '../lib/video'
 import { FLAG_REASONS } from '../constants'
 import type { Author, PracticeItem } from '../types'
 
@@ -64,6 +65,12 @@ export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpe
         <div className={'feedback ' + (correct ? '' : 'bad')}>
           <div className="fb-result" style={{ color: correct ? 'var(--good)' : 'var(--bad)' }}>{correct ? '✓ Correct' : '✗ Not quite'}</div>
           {q.explanation}
+          {youtubeEmbedUrl(q.video) && (
+            <div className="cc-video" style={{ marginTop: 12 }}><div className="cc-video-frame">
+              <iframe src={youtubeEmbedUrl(q.video)!} title="Video explanation" loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </div></div>
+          )}
           <div className="qb-rev">Authored by <b>{att.author.name}</b>. Reviewed by the <b>Wards & Boards review board</b>.</div>
           <div className="case-actions">
             <span className="os-stars">{[1, 2, 3, 4, 5].map((n) => <span key={n} onClick={() => onRate(n)}>{n <= rated ? <b>★</b> : '☆'}</span>)}</span>

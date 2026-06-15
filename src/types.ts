@@ -153,6 +153,8 @@ export interface PracticeItem {
   // Set for DB-published community questions: the real author + reviewer credits.
   // When absent, the byline falls back to the deterministic mock attribution.
   attribution?: Attribution
+  // Optional YouTube explainer link (as pasted); embedded when present.
+  video?: string | null
 }
 
 export interface PracticeAttempt {
@@ -232,6 +234,7 @@ export interface Draft {
   options: string[]
   answerIndex: number
   explanation: string
+  video: string
 }
 
 export interface ContribReview {

@@ -87,3 +87,32 @@ export async function saveCaseProgress(caseId: string, mode: string): Promise<vo
     /* best-effort */
   }
 }
+
+/** Save one free-text ward-moment answer (keyed by case + prompt). */
+export async function saveWardAnswer(caseId: string, promptId: string, answer: string): Promise<void> {
+  if (!supabase) return
+  const uid = await currentUserId()
+  if (!uid) return
+  try {
+    await supabase.from('ward_answers').upsert({ user_id: uid, case_id: caseId, prompt_id: promptId, answer }, { onConflict: 'user_id,case_id,prompt_id' })
+  } catch {
+    /* best-effort */
+  }
+}
+
+/** Load all of the signed-in user's free-text ward answers, as answers[caseId][promptId]. */
+export async function loadWardAnswers(): Promise<Record<string, Record<string, string>>> {
+  if (!supabase) return {}
+  const uid = await currentUserId()
+  if (!uid) return {}
+  try {
+    const { data } = await supabase.from('ward_answers').select('case_id, prompt_id, answer').eq('user_id', uid)
+    const out: Record<string, Record<string, string>> = {}
+    ;((data ?? []) as { case_id: string; prompt_id: string; answer: string }[]).forEach((r) => {
+      ;(out[r.case_id] ||= {})[r.prompt_id] = r.answer
+    })
+    return out
+  } catch {
+    return {}
+  }
+}
