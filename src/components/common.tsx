@@ -6,8 +6,8 @@ import type { Author, GraphicConfig, LearningPoint } from '../types'
 export function WMLogo() {
   return (
     <svg className="wm-logo" viewBox="0 0 32 28" width="28" height="24" role="img" aria-label="Wards & Boards">
-      <polygon points="16,3 23,15 9,15" fill="currentColor" opacity="0.5" />
-      <polygon points="9,15 23,15 28,25 4,25" fill="currentColor" />
+      <polygon points="16,4 22,15 10,15" fill="currentColor" opacity="0.5" />
+      <polygon points="10,15 22,15 27,24 5,24" fill="currentColor" />
     </svg>
   )
 }
