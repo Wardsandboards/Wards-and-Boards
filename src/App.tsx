@@ -8,6 +8,7 @@ import { boardLint } from './lib/boardLint'
 import { boardBankFromJson } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
+import { dbEnabled, loadStudyData, recordAttempt, saveCaseProgress, saveRating } from './lib/db'
 import { WMLogo } from './components/common'
 import { CaseView, LearnLibrary, WardMomentIntro } from './components/learn'
 import { PracticeCard } from './components/practice'
@@ -77,6 +78,19 @@ export default function App() {
   // identity into the app's user model. No-op (and unsubscribes cleanly) on the mock.
   useEffect(() => onGoogleSession((u) => { if (u && u.email) signIn(u.email, u.name) }), [])
 
+  // Once signed in with a real backend, load this user's study data from Supabase
+  // so progress, ratings, and attempts follow them across devices.
+  useEffect(() => {
+    if (!me || !dbEnabled()) return
+    let cancelled = false
+    loadStudyData().then((d) => {
+      if (cancelled || !d) return
+      setPst({ att: d.att, rate: d.rate })
+      setProgressRaw(d.progress)
+    })
+    return () => { cancelled = true }
+  }, [me?.email])
+
   const cases = CASES.filter((c) => c.active !== false)
   const setProgress = (u: ProgressMap | ((p: ProgressMap) => ProgressMap)) => setProgressRaw((prev) => { const np = typeof u === 'function' ? u(prev) : u; saveLS('os_progress', np); return np })
   const toggleReview = (id: string) => setReview((prev) => { const np = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]; saveLS('os_review', np); return np })
@@ -95,8 +109,8 @@ export default function App() {
   const due = QS.filter((q) => { const l = lastAtt(q.id); return l && !l.correct })
   const bankCats = (() => { const pr: string[] = []; CATEGORY_ORDER.forEach((k) => { if (QS.some((q) => categoryOf(q.system) === k)) pr.push(k) }); QS.forEach((q) => { const k = categoryOf(q.system); if (!pr.includes(k)) pr.push(k) }); return ['All', ...pr] })()
   const bankList = pcat === 'All' ? QS : QS.filter((q) => categoryOf(q.system) === pcat)
-  const pick = (qid: string, i: number, correct: boolean) => { setPicks((s) => ({ ...s, [qid]: i })); if (me) setPst((s) => { const att = { ...s.att }; att[qid] = [...(att[qid] || []), { correct }]; return { ...s, att } }) }
-  const rate = (qid: string, n: number) => setPst((s) => ({ ...s, rate: { ...s.rate, [qid]: n } }))
+  const pick = (qid: string, i: number, correct: boolean) => { setPicks((s) => ({ ...s, [qid]: i })); if (me) { setPst((s) => { const att = { ...s.att }; att[qid] = [...(att[qid] || []), { correct }]; return { ...s, att } }); recordAttempt(qid, correct) } }
+  const rate = (qid: string, n: number) => { setPst((s) => ({ ...s, rate: { ...s.rate, [qid]: n } })); saveRating(qid, n) }
   const submitDraft = () => {
     if (!me) return
     const a = boardLint(draft)
@@ -291,7 +305,7 @@ export default function App() {
         : caseData ? (
           <CaseView caseData={caseData} onBack={() => { setActiveId(null); setMode('learn') }} setProgress={setProgress}
             review={review} onToggleReview={toggleReview} answers={answers[caseData.id] || {}} setAnswers={setAnswers}
-            setReasonAnswer={setReasonAnswer} onOpenAuthor={openAuthor} />
+            setReasonAnswer={setReasonAnswer} onOpenAuthor={openAuthor} onComplete={(caseId, mode) => saveCaseProgress(caseId, mode)} />
         ) : (
           <section className="section" style={{ paddingTop: 30 }}><div className="wrap">
             <WardMomentIntro />
