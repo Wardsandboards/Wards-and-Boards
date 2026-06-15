@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import './styles.css'
 import { CASES } from './data/cases'
 import { DEMO_USERS } from './data/users'
+import { COMMUNITY_AUTHORS } from './data/authors'
+import { buildRoute, parseRoute } from './lib/router'
 import { ADMIN_EMAILS, CATEGORY_ORDER, blankDraft, categoryOf } from './constants'
 import { boardLint } from './lib/boardLint'
 import { boardBankFromJson, communityAttribution } from './lib/questions'
@@ -36,10 +38,12 @@ export default function App() {
   // published community questions for Practice, both DB-backed when configured.
   const [dbContrib, setDbContrib] = useState<DbContribution[]>([])
   const [dbCommunity, setDbCommunity] = useState<CommunityQuestion[]>([])
-  const [mode, setMode] = useState('home')
-  const [authorSel, setAuthorSel] = useState<Author | null>(null)
+  // Initial view comes from the URL so cases/tabs are deep-linkable and survive refresh.
+  const initialRoute = parseRoute(window.location.pathname)
+  const [mode, setMode] = useState(initialRoute.mode)
+  const [authorSel, setAuthorSel] = useState<Author | null>(() => (initialRoute.authorId ? COMMUNITY_AUTHORS.find((a) => a.id === initialRoute.authorId) ?? null : null))
   const openAuthor = (a: Author) => { setAuthorSel(a); setMode('authors') }
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(initialRoute.caseId)
   const [progress, setProgressRaw] = useState<ProgressMap>(() => loadLS('os_progress', {}))
   const [review, setReview] = useState<string[]>(() => loadLS('os_review', []))
   const [answers, setAnswersRaw] = useState<Record<string, Record<string, string>>>(() => loadLS('os_answers', {}))
@@ -57,6 +61,23 @@ export default function App() {
 
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); saveLS('os_theme', theme) }, [theme])
   useEffect(() => { if ('scrollRestoration' in history) history.scrollRestoration = 'manual' }, [])
+
+  // Keep the URL in sync with the current view (push a new history entry only on
+  // a real change), and react to the browser back/forward buttons.
+  useEffect(() => {
+    const path = buildRoute({ mode, caseId: activeId, authorId: authorSel?.id ?? null })
+    if (path !== window.location.pathname) window.history.pushState(null, '', path)
+  }, [mode, activeId, authorSel])
+  useEffect(() => {
+    const onPop = () => {
+      const r = parseRoute(window.location.pathname)
+      setMode(r.mode)
+      setActiveId(r.caseId)
+      setAuthorSel(r.authorId ? COMMUNITY_AUTHORS.find((a) => a.id === r.authorId) ?? null : null)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
   useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }) }, [mode, activeId, psub, csub])
   useEffect(() => saveLS('os_practice', pst), [pst])
   useEffect(() => saveLS('os_contrib', contrib), [contrib])

@@ -2,11 +2,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// base: './' keeps asset paths relative so the built site works from any
-// GitHub Pages sub-path (project pages) without extra config.
-// Vitest config lives under `test` (typed via the triple-slash reference above).
+// base: '/' uses absolute asset paths. The site lives at the root of the custom
+// domain (wardsandboards.com), and client-side routes like /learn/<case> need
+// absolute /assets/ URLs so a deep-linked page loads its scripts. The build
+// script also copies index.html -> 404.html so Pages serves the app shell for
+// those routes. Vitest config lives under `test` (typed via the reference above).
 export default defineConfig({
-  base: './',
+  base: '/',
   plugins: [react()],
   build: {
     rollupOptions: {
