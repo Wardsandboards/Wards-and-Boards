@@ -150,6 +150,9 @@ export interface PracticeItem {
   source: string
   citableId?: string | null
   lint: LintResult
+  // Set for DB-published community questions: the real author + reviewer credits.
+  // When absent, the byline falls back to the deterministic mock attribution.
+  attribution?: Attribution
 }
 
 export interface PracticeAttempt {
@@ -207,6 +210,16 @@ export interface User {
 export interface AuthState {
   currentEmail: string | null
   users: Record<string, User>
+}
+
+/** A pending contributor application, normalized for the admin queue (DB or mock). */
+export interface PendingApp {
+  id: string // profile id (DB) or email (mock) — what onDecide receives
+  name: string
+  email: string
+  training: string
+  institution: string
+  npi: string
 }
 
 // ---------- Contribute ----------

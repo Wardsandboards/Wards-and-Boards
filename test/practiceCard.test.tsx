@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { PracticeCard } from '../src/components/practice'
+import { communityAttribution } from '../src/lib/questions'
 import type { PracticeItem } from '../src/types'
 
 const q: PracticeItem = {
@@ -29,5 +30,20 @@ describe('PracticeCard', () => {
   it('shows not-quite feedback when the picked index is wrong', () => {
     render(<PracticeCard q={q} picked={0} onPick={noop} rated={0} onRate={noop} onGoCase={noop} />)
     expect(screen.getByText('✗ Not quite')).toBeTruthy()
+  })
+
+  it('uses the real attribution for a community question and does not make it clickable', () => {
+    const onOpenAuthor = vi.fn()
+    const community: PracticeItem = {
+      ...q, id: 'community-1', source: 'Community',
+      attribution: communityAttribution({ author_id: 'a1', author_name: 'Dr. Lee', author_creds: 'Cardiology fellow', author_institution: 'Stanford', reviewer_names: ['Dr. Chen', 'Dr. Okafor'] }),
+    }
+    const { container } = render(<PracticeCard q={community} picked={2} onPick={noop} rated={0} onRate={noop} onGoCase={noop} onOpenAuthor={onOpenAuthor} />)
+    const byline = container.querySelector('.q-byline') as HTMLElement
+    expect(byline.textContent).toContain('Dr. Lee')
+    expect(screen.getByText(/Peer-reviewed by/)).toBeTruthy()
+    // The byline is a plain span (no profile page for real authors yet), not a button.
+    expect(byline.querySelector('button')).toBeNull()
+    expect(onOpenAuthor).not.toHaveBeenCalled()
   })
 })

@@ -5,10 +5,12 @@ import { CASES } from './data/cases'
 import { DEMO_USERS } from './data/users'
 import { ADMIN_EMAILS, CATEGORY_ORDER, blankDraft, categoryOf } from './constants'
 import { boardLint } from './lib/boardLint'
-import { boardBankFromJson } from './lib/questions'
+import { boardBankFromJson, communityAttribution } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
 import { dbEnabled, loadStudyData, recordAttempt, saveCaseProgress, saveRating } from './lib/db'
+import { applyForContributor, decideApplication, listPendingApplications, loadCommunityQuestions, loadContributions, loadMyProfile, submitContribution, submitReview } from './lib/contributeDb'
+import type { CommunityQuestion, DbContribution, DbProfile } from './lib/contributeDb'
 import { WMLogo } from './components/common'
 import { CaseView, LearnLibrary, WardMomentIntro } from './components/learn'
 import { PracticeCard } from './components/practice'
@@ -18,13 +20,22 @@ import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
 import { googleEnabled, onGoogleSession, signInWithGoogle, signOutGoogle } from './auth/googleAuth'
-import type { AuthState, Author, ContribState, Draft, LintResult, PracticeItem, PracticeStore } from './types'
+import type { AuthState, Author, ContribState, Draft, LintResult, PendingApp, PracticeItem, PracticeStore } from './types'
 
 type ProgressMap = Record<string, Record<string, boolean>>
 
 export default function App() {
   const [theme, setTheme] = useState<string>(() => loadLS('os_theme', 'light'))
   const [auth, setAuth] = useState<AuthState>(() => loadLS('os_auth', { currentEmail: null, users: JSON.parse(JSON.stringify(DEMO_USERS)) }))
+  // When a real backend is configured, roles + application status come from the
+  // signed-in user's `profiles` row, not localStorage. `dbPending` holds the
+  // admin queue loaded from the DB. Both stay null/empty on the localStorage mock.
+  const [profile, setProfile] = useState<DbProfile | null>(null)
+  const [dbPending, setDbPending] = useState<DbProfile[]>([])
+  // The contributor workspace (own + in-review + published, RLS-scoped) and the
+  // published community questions for Practice, both DB-backed when configured.
+  const [dbContrib, setDbContrib] = useState<DbContribution[]>([])
+  const [dbCommunity, setDbCommunity] = useState<CommunityQuestion[]>([])
   const [mode, setMode] = useState('home')
   const [authorSel, setAuthorSel] = useState<Author | null>(null)
   const openAuthor = (a: Author) => { setAuthorSel(a); setMode('authors') }
@@ -52,31 +63,66 @@ export default function App() {
   useEffect(() => saveLS('os_auth', auth), [auth])
 
   // ---- auth ----
+  // With a backend, roles + application status are authoritative from `profile`
+  // (the DB). On the localStorage mock they come from the local user record.
+  const dbOn = dbEnabled()
   const me = auth.currentEmail ? auth.users[auth.currentEmail] : null
-  const isAdmin = !!me && ADMIN_EMAILS.includes(me.email)
-  const isContributor = !!me && me.role === 'contributor' && !!me.app && me.app.status === 'approved'
+  const isAdmin = dbOn ? profile?.role === 'admin' : (!!me && ADMIN_EMAILS.includes(me.email))
+  const isContributor = dbOn
+    ? (profile?.role === 'admin' || (profile?.role === 'contributor' && profile?.app_status === 'approved'))
+    : (!!me && me.role === 'contributor' && !!me.app && me.app.status === 'approved')
+  const appStatus = dbOn ? (profile?.app_status ?? 'none') : (me?.app?.status ?? 'none')
   const userName = (email: string) => { const u = auth.users[email]; return (u && u.name) || email || 'Wards & Boards editorial' }
   const signIn = (email: string, name: string) => setAuth((a) => { const u = { ...a.users }; if (!u[email]) u[email] = { name: name || email, email, role: 'learner', app: { status: 'none' } }; return { ...a, users: u, currentEmail: email } })
-  const signOut = () => { if (googleEnabled) signOutGoogle(); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
-  const applyContributor = (form: { training: string; institution: string; npi: string }) => setAuth((a) => {
-    if (!a.currentEmail) return a
-    const u = { ...a.users }
-    const cur = u[a.currentEmail]
-    if (!cur) return a
-    u[a.currentEmail] = { ...cur, app: { status: 'pending', ...form } }
-    return { ...a, users: u }
-  })
-  const decideApp = (email: string, decision: string) => setAuth((a) => {
-    const u = { ...a.users }
-    const usr = u[email]
-    if (!usr) return a
-    u[email] = decision === 'approve' ? { ...usr, role: 'contributor', app: { ...usr.app, status: 'approved' } } : { ...usr, app: { ...usr.app, status: 'denied' } }
-    return { ...a, users: u }
-  })
+  const signOut = () => { if (googleEnabled) signOutGoogle(); setProfile(null); setDbPending([]); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
+  const applyContributor = (form: { training: string; institution: string; npi: string }) => {
+    if (dbOn) { applyForContributor(form).then((p) => { if (p) setProfile(p) }); return }
+    setAuth((a) => {
+      if (!a.currentEmail) return a
+      const u = { ...a.users }
+      const cur = u[a.currentEmail]
+      if (!cur) return a
+      u[a.currentEmail] = { ...cur, app: { status: 'pending', ...form } }
+      return { ...a, users: u }
+    })
+  }
+  const refreshPending = () => { if (dbEnabled()) listPendingApplications().then(setDbPending) }
+  const refreshContrib = () => { if (dbEnabled()) loadContributions().then(setDbContrib) }
+  const refreshCommunity = () => { if (dbEnabled()) loadCommunityQuestions().then(setDbCommunity) }
+  const decideApp = (id: string, decision: string) => {
+    if (dbOn) { decideApplication(id, decision === 'approve' ? 'approve' : 'deny').then(refreshPending); return }
+    setAuth((a) => {
+      const u = { ...a.users }
+      const usr = u[id]
+      if (!usr) return a
+      u[id] = decision === 'approve' ? { ...usr, role: 'contributor', app: { ...usr.app, status: 'approved' } } : { ...usr, app: { ...usr.app, status: 'denied' } }
+      return { ...a, users: u }
+    })
+  }
+  // The admin queue, normalized so AdminQueue takes one shape from DB or mock.
+  const pendingApps: PendingApp[] = dbOn
+    ? dbPending.map((p) => ({ id: p.id, name: p.full_name || p.email || 'Applicant', email: p.email || '', training: p.training || '', institution: p.institution || '', npi: p.npi || '' }))
+    : Object.values(auth.users).filter((u) => u.app && u.app.status === 'pending').map((u) => ({ id: u.email, name: u.name, email: u.email, training: u.app.training || '', institution: u.app.institution || '', npi: u.app.npi || '' }))
 
   // When a real Supabase backend is configured, adopt the signed-in Google
   // identity into the app's user model. No-op (and unsubscribes cleanly) on the mock.
   useEffect(() => onGoogleSession((u) => { if (u && u.email) signIn(u.email, u.name) }), [])
+
+  // Load the signed-in user's DB profile (their real role + application status).
+  useEffect(() => {
+    if (!me || !dbEnabled()) { setProfile(null); return }
+    let cancelled = false
+    loadMyProfile().then((p) => { if (!cancelled) setProfile(p) })
+    return () => { cancelled = true }
+  }, [me?.email])
+
+  // Admins: load the pending-application queue from the DB when viewing Admin.
+  useEffect(() => { if (mode === 'admin' && isAdmin) refreshPending() }, [mode, isAdmin])
+
+  // Published community questions (Practice bank) are public; load them once the
+  // backend is on. The workspace items follow the signed-in contributor.
+  useEffect(() => { refreshCommunity() }, [])
+  useEffect(() => { if (me && dbEnabled()) refreshContrib() }, [me?.email])
 
   // Once signed in with a real backend, load this user's study data from Supabase
   // so progress, ratings, and attempts follow them across devices.
@@ -101,7 +147,17 @@ export default function App() {
   const goCase = (id: string | null) => { setMode('learn'); setActiveId(id) }
   const caseData = cases.find((c) => c.id === activeId)
 
-  const pubContrib: PracticeItem[] = contrib.qs.filter((q) => q.status === 'published').map((q) => { const it = { ...q, source: 'Community' } as unknown as PracticeItem; it.lint = boardLint(it); return it })
+  const pubContrib: PracticeItem[] = dbOn
+    ? dbCommunity.map((c) => {
+        const it = {
+          id: 'community-' + c.id, caseId: null, qkey: 'community:' + c.id, caseTitle: '', system: c.system, topic: '',
+          vignette: c.vignette, leadIn: c.lead_in, options: c.options, answerIndex: c.answer_index, explanation: c.explanation,
+          source: 'Community', citableId: c.citable_id, attribution: communityAttribution(c),
+        } as PracticeItem
+        it.lint = boardLint(it)
+        return it
+      })
+    : contrib.qs.filter((q) => q.status === 'published').map((q) => { const it = { ...q, source: 'Community' } as unknown as PracticeItem; it.lint = boardLint(it); return it })
   const QS = [...boardQS, ...pubContrib]
   const caseCount = new Set(boardQS.map((q) => q.caseId)).size
   const ready = QS.filter((q) => q.lint.ok).length
@@ -116,10 +172,21 @@ export default function App() {
     const a = boardLint(draft)
     setAudit(a)
     if (!a.ok) return
-    setContrib((s) => enqueueDraft(s, draft, me.email))
+    if (dbOn) submitContribution(draft).then(refreshContrib)
+    else setContrib((s) => enqueueDraft(s, draft, me.email))
     setDraft(blankDraft); setAudit(null); setCsub('review')
   }
-  const reviewItem = (qid: string, decision: string) => { if (!me) return; setContrib((s) => applyReview(s, qid, me.email, decision)) }
+  const reviewItem = (qid: string, decision: string) => {
+    if (!me) return
+    if (dbOn) submitReview(qid, decision === 'approve' ? 'approve' : 'reject').then(() => { refreshContrib(); refreshCommunity() })
+    else setContrib((s) => applyReview(s, qid, me.email, decision))
+  }
+  // Normalized contributor-workspace items (DB or mock), plus this user's id in
+  // whichever space the data lives (uuid for the DB, email for the mock).
+  const myId = dbOn ? (profile?.id ?? '') : (me?.email ?? '')
+  const workItems = dbOn
+    ? dbContrib.map((c) => ({ id: c.id, system: c.system, level: c.level, vignette: c.vignette, leadIn: c.lead_in, options: c.options, answerIndex: c.answer_index, explanation: c.explanation, status: c.status, citableId: c.citable_id, authorId: c.author_id, authorName: c.author_name, reviews: c.reviews.map((r) => ({ reviewerId: r.reviewer_id, reviewerName: r.reviewer_name, decision: r.decision })) }))
+    : contrib.qs.map((q) => ({ id: q.id, system: q.system, level: q.level, vignette: q.vignette, leadIn: q.leadIn, options: q.options, answerIndex: q.answerIndex, explanation: q.explanation, status: q.status, citableId: q.citableId, authorId: q.authorId, authorName: userName(q.authorId), reviews: q.reviews.map((r) => ({ reviewerId: r.reviewerId, reviewerName: userName(r.reviewerId), decision: r.decision })) }))
 
   const PracticeBank = ({ list, empty }: { list: PracticeItem[]; empty: ReactNode }) => (
     <div>
@@ -186,10 +253,10 @@ export default function App() {
           <div className="step-card"><div className="step-n">2</div><div><h3>Peer reviewed</h3><p>Two independent physicians review the item and approve it, request changes, or reject it.</p></div></div>
           <div className="step-card"><div className="step-n">3</div><div><h3>Selected &amp; published</h3><p>Approved questions are selected into the Practice bank with a citable ID. Learners then rate their quality.</p></div></div>
         </div>
-        <div className="banner">To play out the two-reviewer flow, sign in as different contributors (use the demo accounts): author as one, then approve as two others.</div>
+        <div className="banner">{dbOn ? 'Two independent contributors must approve an item before it publishes to the Practice bank. You cannot review your own questions.' : 'To play out the two-reviewer flow, sign in as different contributors (use the demo accounts): author as one, then approve as two others.'}</div>
         <div className="cat-tabs">
           <button className={'cat-tab ' + (csub === 'author' ? 'active' : '')} onClick={() => setCsub('author')}>Write a question</button>
-          <button className={'cat-tab ' + (csub === 'review' ? 'active' : '')} onClick={() => setCsub('review')}>Review queue<span className="cat-count">{contrib.qs.filter((q) => q.status === 'in_review').length}</span></button>
+          <button className={'cat-tab ' + (csub === 'review' ? 'active' : '')} onClick={() => setCsub('review')}>Review queue<span className="cat-count">{workItems.filter((q) => q.status === 'in_review').length}</span></button>
           <button className={'cat-tab ' + (csub === 'cv' ? 'active' : '')} onClick={() => setCsub('cv')}>Contribution record</button>
         </div>
         {csub === 'author' && (
@@ -220,16 +287,16 @@ export default function App() {
             )}
           </div>
         )}
-        {csub === 'review' && (contrib.qs.filter((q) => q.status === 'in_review').length === 0 ?
+        {csub === 'review' && (workItems.filter((q) => q.status === 'in_review').length === 0 ?
           <div className="inprog"><p>Review queue is empty. Write a question, then sign in as another approved contributor to review it.</p></div> :
-          contrib.qs.filter((q) => q.status === 'in_review').map((q) => {
+          workItems.filter((q) => q.status === 'in_review').map((q) => {
             const a = boardLint(q)
-            const isAuthor = q.authorId === me.email
-            const mine = q.reviews.find((r) => r.reviewerId === me.email)
+            const isAuthor = q.authorId === myId
+            const mine = q.reviews.find((r) => r.reviewerId === myId)
             const ap = q.reviews.filter((r) => r.decision === 'approve').length
             return (
               <div className="qblock" key={q.id}>
-                <div className="qid"><span className="os-badge polish">in review</span> <span style={{ color: 'var(--mid)', textTransform: 'none', letterSpacing: 0, fontWeight: 700, marginLeft: 6 }}>{q.system || 'untagged'} · by {userName(q.authorId)} · {ap}/2 approvals</span></div>
+                <div className="qid"><span className="os-badge polish">in review</span> <span style={{ color: 'var(--mid)', textTransform: 'none', letterSpacing: 0, fontWeight: 700, marginLeft: 6 }}>{q.system || 'untagged'} · by {q.authorName} · {ap}/2 approvals</span></div>
                 <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{q.vignette}</div>
                 <p className="qstem">{q.leadIn}</p>
                 <div className="choices">{q.options.map((o, i) => (<div key={i} className={'choice ' + (i === q.answerIndex ? 'correct' : '')}><span className="choice-letter">{String.fromCharCode(65 + i)}</span><span>{o}</span></div>))}</div>
@@ -249,11 +316,11 @@ export default function App() {
         {csub === 'cv' && (
           <div className="qblock">
             {(() => {
-              const authored = contrib.qs.filter((q) => q.status === 'published' && q.authorId === me.email)
-              const reviewed = contrib.qs.filter((q) => q.status === 'published' && q.reviews && q.reviews.some((r) => r.reviewerId === me.email && r.decision === 'approve'))
-              const cred = me.app && me.app.training ? me.app.training : ''
+              const authored = workItems.filter((q) => q.status === 'published' && q.authorId === myId)
+              const reviewed = workItems.filter((q) => q.status === 'published' && q.reviews && q.reviews.some((r) => r.reviewerId === myId && r.decision === 'approve'))
+              const cred = dbOn ? (profile?.training || '') : (me.app && me.app.training ? me.app.training : '')
               const lines = [me.name + (cred ? ', ' + cred : ''), 'Wards & Boards Question Commons, contribution record (as of June 2026)', '', 'PEER-REVIEWED QUESTIONS AUTHORED (' + authored.length + '):']
-              authored.forEach((q) => lines.push('  ' + q.citableId + '  ' + (q.system || '') + ' (' + (q.level === 'step1' ? 'Step 1' : 'Shelf') + '). Reviewers: ' + q.reviews.filter((r) => r.decision === 'approve').map((r) => userName(r.reviewerId)).join(', ') + '.'))
+              authored.forEach((q) => lines.push('  ' + q.citableId + '  ' + (q.system || '') + ' (' + (q.level === 'step1' ? 'Step 1' : 'Shelf') + '). Reviewers: ' + q.reviews.filter((r) => r.decision === 'approve').map((r) => r.reviewerName).join(', ') + '.'))
               if (!authored.length) lines.push('  (none yet)')
               lines.push('', 'PEER REVIEW SERVICE (' + reviewed.length + '):')
               reviewed.forEach((q) => lines.push('  ' + q.citableId + '  ' + (q.system || '') + '. Served as peer reviewer.'))
@@ -317,7 +384,7 @@ export default function App() {
       {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} /> : <PracticeView />)}
 
       {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />
-        : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication me={me} onApply={applyContributor} /></div></section>
+        : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication name={me.name} appStatus={appStatus} onApply={applyContributor} /></div></section>
           : <ContributeWorkspace />)}
 
       {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} />}
@@ -331,7 +398,7 @@ export default function App() {
       {mode === 'admin' && isAdmin && (
         <section className="section" style={{ paddingTop: 34 }}><div className="wrap">
           <div className="sec-head"><div className="kicker">Admin</div><h2 className="h2">Contributor applications</h2></div>
-          <AdminQueue users={auth.users} onDecide={decideApp} />
+          <AdminQueue pending={pendingApps} onDecide={decideApp} />
         </div></section>
       )}
 
