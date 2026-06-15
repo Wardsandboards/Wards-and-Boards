@@ -15,6 +15,7 @@ import { AuthorsView } from './components/authors'
 import { AdminQueue, ContributorApplication, SignIn } from './components/auth'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
+import { PrivacyView, TermsView } from './components/legal'
 import { googleEnabled, onGoogleSession, signInWithGoogle, signOutGoogle } from './auth/googleAuth'
 import type { AuthState, Author, ContribState, Draft, LintResult, PracticeItem, PracticeStore } from './types'
 
@@ -309,6 +310,10 @@ export default function App() {
 
       {mode === 'about' && <AboutView />}
 
+      {mode === 'privacy' && <PrivacyView />}
+
+      {mode === 'terms' && <TermsView />}
+
       {mode === 'admin' && isAdmin && (
         <section className="section" style={{ paddingTop: 34 }}><div className="wrap">
           <div className="sec-head"><div className="kicker">Admin</div><h2 className="h2">Contributor applications</h2></div>
@@ -318,6 +323,11 @@ export default function App() {
 
       <footer><div className="foot-inner">
         <div className="foot-left">Wards & Boards · learn the why, then practice the questions · built by a practicing hospitalist</div>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <button className="nav-link" onClick={() => setMode('about')}>About</button>
+          <button className="nav-link" onClick={() => setMode('privacy')}>Privacy</button>
+          <button className="nav-link" onClick={() => setMode('terms')}>Terms</button>
+        </div>
         <div className="foot-right">WARDS &amp; BOARDS</div></div></footer>
     </>
   )
