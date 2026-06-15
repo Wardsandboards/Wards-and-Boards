@@ -9,6 +9,8 @@ import { boardBankFromJson } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
 import { dbEnabled, loadStudyData, recordAttempt, saveCaseProgress, saveRating } from './lib/db'
+import { applyForContributor, decideApplication, listPendingApplications, loadMyProfile } from './lib/contributeDb'
+import type { DbProfile } from './lib/contributeDb'
 import { WMLogo } from './components/common'
 import { CaseView, LearnLibrary, WardMomentIntro } from './components/learn'
 import { PracticeCard } from './components/practice'
@@ -18,13 +20,18 @@ import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
 import { googleEnabled, onGoogleSession, signInWithGoogle, signOutGoogle } from './auth/googleAuth'
-import type { AuthState, Author, ContribState, Draft, LintResult, PracticeItem, PracticeStore } from './types'
+import type { AuthState, Author, ContribState, Draft, LintResult, PendingApp, PracticeItem, PracticeStore } from './types'
 
 type ProgressMap = Record<string, Record<string, boolean>>
 
 export default function App() {
   const [theme, setTheme] = useState<string>(() => loadLS('os_theme', 'light'))
   const [auth, setAuth] = useState<AuthState>(() => loadLS('os_auth', { currentEmail: null, users: JSON.parse(JSON.stringify(DEMO_USERS)) }))
+  // When a real backend is configured, roles + application status come from the
+  // signed-in user's `profiles` row, not localStorage. `dbPending` holds the
+  // admin queue loaded from the DB. Both stay null/empty on the localStorage mock.
+  const [profile, setProfile] = useState<DbProfile | null>(null)
+  const [dbPending, setDbPending] = useState<DbProfile[]>([])
   const [mode, setMode] = useState('home')
   const [authorSel, setAuthorSel] = useState<Author | null>(null)
   const openAuthor = (a: Author) => { setAuthorSel(a); setMode('authors') }
@@ -52,31 +59,59 @@ export default function App() {
   useEffect(() => saveLS('os_auth', auth), [auth])
 
   // ---- auth ----
+  // With a backend, roles + application status are authoritative from `profile`
+  // (the DB). On the localStorage mock they come from the local user record.
+  const dbOn = dbEnabled()
   const me = auth.currentEmail ? auth.users[auth.currentEmail] : null
-  const isAdmin = !!me && ADMIN_EMAILS.includes(me.email)
-  const isContributor = !!me && me.role === 'contributor' && !!me.app && me.app.status === 'approved'
+  const isAdmin = dbOn ? profile?.role === 'admin' : (!!me && ADMIN_EMAILS.includes(me.email))
+  const isContributor = dbOn
+    ? (profile?.role === 'admin' || (profile?.role === 'contributor' && profile?.app_status === 'approved'))
+    : (!!me && me.role === 'contributor' && !!me.app && me.app.status === 'approved')
+  const appStatus = dbOn ? (profile?.app_status ?? 'none') : (me?.app?.status ?? 'none')
   const userName = (email: string) => { const u = auth.users[email]; return (u && u.name) || email || 'Wards & Boards editorial' }
   const signIn = (email: string, name: string) => setAuth((a) => { const u = { ...a.users }; if (!u[email]) u[email] = { name: name || email, email, role: 'learner', app: { status: 'none' } }; return { ...a, users: u, currentEmail: email } })
-  const signOut = () => { if (googleEnabled) signOutGoogle(); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
-  const applyContributor = (form: { training: string; institution: string; npi: string }) => setAuth((a) => {
-    if (!a.currentEmail) return a
-    const u = { ...a.users }
-    const cur = u[a.currentEmail]
-    if (!cur) return a
-    u[a.currentEmail] = { ...cur, app: { status: 'pending', ...form } }
-    return { ...a, users: u }
-  })
-  const decideApp = (email: string, decision: string) => setAuth((a) => {
-    const u = { ...a.users }
-    const usr = u[email]
-    if (!usr) return a
-    u[email] = decision === 'approve' ? { ...usr, role: 'contributor', app: { ...usr.app, status: 'approved' } } : { ...usr, app: { ...usr.app, status: 'denied' } }
-    return { ...a, users: u }
-  })
+  const signOut = () => { if (googleEnabled) signOutGoogle(); setProfile(null); setDbPending([]); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
+  const applyContributor = (form: { training: string; institution: string; npi: string }) => {
+    if (dbOn) { applyForContributor(form).then((p) => { if (p) setProfile(p) }); return }
+    setAuth((a) => {
+      if (!a.currentEmail) return a
+      const u = { ...a.users }
+      const cur = u[a.currentEmail]
+      if (!cur) return a
+      u[a.currentEmail] = { ...cur, app: { status: 'pending', ...form } }
+      return { ...a, users: u }
+    })
+  }
+  const refreshPending = () => { if (dbEnabled()) listPendingApplications().then(setDbPending) }
+  const decideApp = (id: string, decision: string) => {
+    if (dbOn) { decideApplication(id, decision === 'approve' ? 'approve' : 'deny').then(refreshPending); return }
+    setAuth((a) => {
+      const u = { ...a.users }
+      const usr = u[id]
+      if (!usr) return a
+      u[id] = decision === 'approve' ? { ...usr, role: 'contributor', app: { ...usr.app, status: 'approved' } } : { ...usr, app: { ...usr.app, status: 'denied' } }
+      return { ...a, users: u }
+    })
+  }
+  // The admin queue, normalized so AdminQueue takes one shape from DB or mock.
+  const pendingApps: PendingApp[] = dbOn
+    ? dbPending.map((p) => ({ id: p.id, name: p.full_name || p.email || 'Applicant', email: p.email || '', training: p.training || '', institution: p.institution || '', npi: p.npi || '' }))
+    : Object.values(auth.users).filter((u) => u.app && u.app.status === 'pending').map((u) => ({ id: u.email, name: u.name, email: u.email, training: u.app.training || '', institution: u.app.institution || '', npi: u.app.npi || '' }))
 
   // When a real Supabase backend is configured, adopt the signed-in Google
   // identity into the app's user model. No-op (and unsubscribes cleanly) on the mock.
   useEffect(() => onGoogleSession((u) => { if (u && u.email) signIn(u.email, u.name) }), [])
+
+  // Load the signed-in user's DB profile (their real role + application status).
+  useEffect(() => {
+    if (!me || !dbEnabled()) { setProfile(null); return }
+    let cancelled = false
+    loadMyProfile().then((p) => { if (!cancelled) setProfile(p) })
+    return () => { cancelled = true }
+  }, [me?.email])
+
+  // Admins: load the pending-application queue from the DB when viewing Admin.
+  useEffect(() => { if (mode === 'admin' && isAdmin) refreshPending() }, [mode, isAdmin])
 
   // Once signed in with a real backend, load this user's study data from Supabase
   // so progress, ratings, and attempts follow them across devices.
@@ -317,7 +352,7 @@ export default function App() {
       {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} /> : <PracticeView />)}
 
       {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />
-        : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication me={me} onApply={applyContributor} /></div></section>
+        : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication name={me.name} appStatus={appStatus} onApply={applyContributor} /></div></section>
           : <ContributeWorkspace />)}
 
       {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} />}
@@ -331,7 +366,7 @@ export default function App() {
       {mode === 'admin' && isAdmin && (
         <section className="section" style={{ paddingTop: 34 }}><div className="wrap">
           <div className="sec-head"><div className="kicker">Admin</div><h2 className="h2">Contributor applications</h2></div>
-          <AdminQueue users={auth.users} onDecide={decideApp} />
+          <AdminQueue pending={pendingApps} onDecide={decideApp} />
         </div></section>
       )}
 

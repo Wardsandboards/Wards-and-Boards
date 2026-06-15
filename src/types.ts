@@ -209,6 +209,16 @@ export interface AuthState {
   users: Record<string, User>
 }
 
+/** A pending contributor application, normalized for the admin queue (DB or mock). */
+export interface PendingApp {
+  id: string // profile id (DB) or email (mock) — what onDecide receives
+  name: string
+  email: string
+  training: string
+  institution: string
+  npi: string
+}
+
 // ---------- Contribute ----------
 
 export interface Draft {
