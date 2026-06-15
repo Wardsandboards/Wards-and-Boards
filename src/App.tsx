@@ -7,17 +7,17 @@ import { COMMUNITY_AUTHORS } from './data/authors'
 import { buildRoute, parseRoute } from './lib/router'
 import { ADMIN_EMAILS, CATEGORY_ORDER, blankDraft, categoryOf } from './constants'
 import { boardLint } from './lib/boardLint'
-import { boardBankFromJson, communityAttribution } from './lib/questions'
+import { authorStub, boardBankFromJson, communityAttribution } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
 import { dbEnabled, loadStudyData, recordAttempt, saveCaseProgress, saveRating } from './lib/db'
-import { applyForContributor, decideApplication, listPendingApplications, loadCommunityQuestions, loadContributions, loadMyProfile, profileName, submitContribution, submitReview, updateProfileSettings } from './lib/contributeDb'
-import type { CommunityQuestion, DbContribution, DbProfile } from './lib/contributeDb'
+import { applyForContributor, decideApplication, listPendingApplications, loadAuthors, loadCommunityQuestions, loadContributions, loadMyProfile, loadOpenFlags, profileName, resolveFlag, submitContribution, submitFlag, submitReview, updateProfileSettings } from './lib/contributeDb'
+import type { CommunityQuestion, DbAuthor, DbContribution, DbFlag, DbProfile } from './lib/contributeDb'
 import { WMLogo } from './components/common'
 import { CaseView, LearnLibrary, WardMomentIntro } from './components/learn'
 import { PracticeCard } from './components/practice'
 import { AuthorsView } from './components/authors'
-import { AdminQueue, ContributorApplication, SignIn } from './components/auth'
+import { AdminQueue, ContributorApplication, FlagQueue, SignIn } from './components/auth'
 import { SettingsView } from './components/settings'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
@@ -39,6 +39,10 @@ export default function App() {
   // published community questions for Practice, both DB-backed when configured.
   const [dbContrib, setDbContrib] = useState<DbContribution[]>([])
   const [dbCommunity, setDbCommunity] = useState<CommunityQuestion[]>([])
+  const [dbAuthors, setDbAuthors] = useState<DbAuthor[]>([])
+  // Question flags: DB-backed when configured; localStorage on the mock.
+  const [dbFlags, setDbFlags] = useState<DbFlag[]>([])
+  const [mockFlags, setMockFlags] = useState<DbFlag[]>(() => loadLS('os_flags', []))
   // Profile settings on the localStorage mock are keyed by email; with a backend
   // they live on the user's `profile` row instead.
   const [settings, setSettings] = useState<Record<string, { display_name: string; bio: string; course_code: string }>>(() => loadLS('os_settings', {}))
@@ -124,6 +128,29 @@ export default function App() {
   const refreshPending = () => { if (dbEnabled()) listPendingApplications().then(setDbPending) }
   const refreshContrib = () => { if (dbEnabled()) loadContributions().then(setDbContrib) }
   const refreshCommunity = () => { if (dbEnabled()) loadCommunityQuestions().then(setDbCommunity) }
+  const refreshAuthors = () => { if (dbEnabled()) loadAuthors().then(setDbAuthors) }
+  const refreshFlags = () => { if (dbEnabled()) loadOpenFlags().then(setDbFlags) }
+  const flagQuestion = (questionKey: string, reason: string, comment: string) => {
+    if (!me) return
+    if (dbOn) { submitFlag(questionKey, reason, comment); return }
+    setMockFlags((f) => { const np = [...f, { id: 'f' + Date.now(), user_id: me.email, question_key: questionKey, reason, comment, status: 'open', created_at: new Date().toISOString() }]; saveLS('os_flags', np); return np })
+  }
+  const onResolveFlag = (id: string) => {
+    if (dbOn) { resolveFlag(id).then(refreshFlags); return }
+    setMockFlags((f) => { const np = f.map((x) => (x.id === id ? { ...x, status: 'resolved' } : x)); saveLS('os_flags', np); return np })
+  }
+  const openFlags: DbFlag[] = (dbOn ? dbFlags : mockFlags).filter((f) => f.status === 'open')
+  // Real contributors, shaped as Author cards; the Authors tab uses these once
+  // anyone has published, and falls back to the showcase otherwise.
+  const realAuthors: Author[] = dbAuthors.map((a) => {
+    const stub = authorStub(a.id, a.name, a.creds, a.institution)
+    stub.role = 'Contributor'
+    stub.bio = a.bio
+    stub.published = a.published
+    stub.qs = a.questions.map((q) => [q.title, q.system, 0, q.citable_id] as [string, string, number, string])
+    return stub
+  })
+  const authorsReal = realAuthors.some((a) => a.published > 0)
   const decideApp = (id: string, decision: string) => {
     if (dbOn) { decideApplication(id, decision === 'approve' ? 'approve' : 'deny').then(refreshPending); return }
     setAuth((a) => {
@@ -152,11 +179,11 @@ export default function App() {
   }, [me?.email])
 
   // Admins: load the pending-application queue from the DB when viewing Admin.
-  useEffect(() => { if (mode === 'admin' && isAdmin) refreshPending() }, [mode, isAdmin])
+  useEffect(() => { if (mode === 'admin' && isAdmin) { refreshPending(); refreshFlags() } }, [mode, isAdmin])
 
   // Published community questions (Practice bank) are public; load them once the
   // backend is on. The workspace items follow the signed-in contributor.
-  useEffect(() => { refreshCommunity() }, [])
+  useEffect(() => { refreshCommunity(); refreshAuthors() }, [])
   useEffect(() => { if (me && dbEnabled()) refreshContrib() }, [me?.email])
 
   // Once signed in with a real backend, load this user's study data from Supabase
@@ -227,7 +254,8 @@ export default function App() {
     <div>
       {list.length === 0 ? <div className="inprog">{empty}</div> :
         list.map((q) => <PracticeCard key={q.id} q={q} picked={picks[q.id]} onPick={(i) => pick(q.id, i, i === q.answerIndex)}
-          rated={pst.rate[q.id] || 0} onRate={(n) => rate(q.id, n)} onGoCase={() => goCase(q.caseId)} onOpenAuthor={openAuthor} />)}
+          rated={pst.rate[q.id] || 0} onRate={(n) => rate(q.id, n)} onGoCase={() => goCase(q.caseId)} onOpenAuthor={openAuthor}
+          onFlag={me ? (reason, comment) => flagQuestion(q.qkey, reason, comment) : undefined} />)}
     </div>
   )
 
@@ -423,7 +451,7 @@ export default function App() {
         : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication name={me.name} appStatus={appStatus} onApply={applyContributor} /></div></section>
           : <ContributeWorkspace />)}
 
-      {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} />}
+      {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} authors={authorsReal ? realAuthors : undefined} isReal={authorsReal} />}
 
       {mode === 'about' && <AboutView />}
 
@@ -439,6 +467,8 @@ export default function App() {
         <section className="section" style={{ paddingTop: 34 }}><div className="wrap">
           <div className="sec-head"><div className="kicker">Admin</div><h2 className="h2">Contributor applications</h2></div>
           <AdminQueue pending={pendingApps} onDecide={decideApp} />
+          <div className="sec-head" style={{ marginTop: 36 }}><div className="kicker">Admin</div><h2 className="h2">Flagged questions<span className="cat-count" style={{ marginLeft: 8 }}>{openFlags.length}</span></h2></div>
+          <FlagQueue flags={openFlags} onResolve={onResolveFlag} />
         </div></section>
       )}
 
