@@ -8,6 +8,17 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: './',
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      // Multi-page: the SPA plus standalone, crawlable /privacy.html and /terms.html.
+      // Relative paths are resolved against the Vite project root.
+      input: {
+        main: 'index.html',
+        privacy: 'privacy.html',
+        terms: 'terms.html',
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

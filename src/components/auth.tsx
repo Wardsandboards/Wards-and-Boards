@@ -18,6 +18,8 @@ export function SignIn({ intent, users, onSignIn, onGoogle, googleLive }: {
         <h2 className="h2" style={{ marginBottom: 8 }}>Sign in to Wards & Boards</h2>
         <p className="sec-lead" style={{ marginTop: 0 }}>Learners get in instantly. To author or review questions, you apply to become a contributor after signing in.</p>
         <button className="btn btn-primary g-btn" style={{ marginTop: 8 }} onClick={() => (onGoogle ? onGoogle() : onSignIn('you@med.school', 'You'))}>Continue with Google {!googleLive && <span className="g-note">demo</span>}</button>
+        {googleLive && <p className="g-note" style={{ marginTop: 12 }}>Free for medical students and physicians. We only use your Google name and email to create your account.</p>}
+        {!googleLive && (<>
         <div className="or">or use your name and email</div>
         <input className="os-input" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
         <input className="os-input" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ marginTop: 8 }} />
@@ -28,6 +30,7 @@ export function SignIn({ intent, users, onSignIn, onGoogle, googleLive }: {
             return (<button key={u.email} className="ghost-btn demo-pick" onClick={() => onSignIn(u.email, u.name)}><span>{u.name}</span><span className={'rolebadge ' + role}>{role}</span></button>)
           })}
         </div>
+        </>)}
       </div>
     </div></section>
   )

@@ -45,7 +45,7 @@ export function boardBankFromJson(): PracticeItem[] {
       vignette: q.vignette,
       leadIn: q.leadIn,
       options: q.options,
-      answerIndex: q.answerIndex,
+      answerIndex: Number(q.answerIndex), // guard: a string index would silently break correct-answer matching
       explanation: q.explanation,
       source: 'Forge',
       citableId: 'WB-2026-' + String(i + 1).padStart(4, '0'),
