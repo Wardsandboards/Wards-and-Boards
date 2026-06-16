@@ -2,6 +2,22 @@ import { useState } from 'react'
 import { ADMIN_EMAILS, TRAINING_LEVELS } from '../constants'
 import type { PendingApp, User } from '../types'
 
+export function FlagQueue({ flags, onResolve }: { flags: { id: string; question_key: string; reason: string; comment: string | null }[]; onResolve: (id: string) => void }) {
+  return (
+    <div>
+      <div className="banner">Questions students flagged for a problem. Check the item, fix it if needed, then resolve.</div>
+      {flags.length === 0 ? <div className="inprog"><p>No open flags. When a student reports a problem on a question, it shows up here.</p></div> :
+        flags.map((f) => (
+          <div className="appq" key={f.id}>
+            <div style={{ fontWeight: 800, color: 'var(--ink)' }}>{f.reason} <span className="userchip">· {f.question_key}</span></div>
+            {f.comment && <div style={{ fontSize: '0.88rem', color: 'var(--mid)', margin: '6px 0' }}>{f.comment}</div>}
+            <div className="case-actions"><button className="submit-btn" style={{ marginTop: 0 }} onClick={() => onResolve(f.id)}>Resolve</button></div>
+          </div>
+        ))}
+    </div>
+  )
+}
+
 export function SignIn({ intent, users, onSignIn, onGoogle, googleLive }: {
   intent?: string
   users: Record<string, User>

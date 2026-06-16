@@ -20,6 +20,8 @@ export function categoryOf(system: string): string {
 export const TRAINING_LEVELS = ['Resident', 'Fellow', 'Attending', 'Other physician']
 export const ADMIN_EMAILS = ['aaron@stanford.edu']
 
+export const FLAG_REASONS = ['Wrong answer key', 'Typo or wording', 'Unclear question', 'Factual error', 'Other']
+
 export const blankDraft: Draft = {
   level: 'step1',
   system: '',

@@ -230,6 +230,92 @@ export async function loadContributions(): Promise<DbContribution[]> {
   }
 }
 
+/** A real contributor for the Authors directory, with their published-question count. */
+export interface DbAuthor {
+  id: string
+  name: string
+  creds: string
+  institution: string
+  bio: string
+  published: number
+  questions: { title: string; system: string; citable_id: string }[]
+}
+
+/** Load real contributors (public, PII-safe) with their published questions. */
+export async function loadAuthors(): Promise<DbAuthor[]> {
+  if (!supabase) return []
+  try {
+    const [aRes, qRes] = await Promise.all([
+      supabase.from('public_authors').select('id, full_name, display_name, bio, institution, training'),
+      supabase.from('published_questions').select('author_id, system, citable_id, lead_in'),
+    ])
+    const authors = (aRes.data ?? []) as { id: string; full_name: string | null; display_name: string | null; bio: string | null; institution: string | null; training: string | null }[]
+    const pubs = (qRes.data ?? []) as { author_id: string; system: string | null; citable_id: string | null; lead_in: string | null }[]
+    return authors.map((a) => {
+      const theirs = pubs.filter((p) => p.author_id === a.id)
+      return {
+        id: a.id,
+        name: a.display_name || a.full_name || 'Contributor',
+        creds: a.training || '',
+        institution: a.institution || '',
+        bio: a.bio || '',
+        published: theirs.length,
+        questions: theirs.map((p) => ({ title: p.lead_in || 'Untitled question', system: p.system || '', citable_id: p.citable_id || '' })),
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Question flags: a content-quality safety net. Students report a problem; the
+// review board / admin sees and resolves them.
+// ---------------------------------------------------------------------------
+
+export interface DbFlag {
+  id: string
+  user_id: string
+  question_key: string
+  reason: string
+  comment: string | null
+  status: string
+  created_at: string
+}
+
+/** File a flag on a question. Best-effort; no-op when signed out / unconfigured. */
+export async function submitFlag(questionKey: string, reason: string, comment: string): Promise<void> {
+  if (!supabase) return
+  const uid = await currentUserId()
+  if (!uid) return
+  try {
+    await supabase.from('question_flags').insert({ user_id: uid, question_key: questionKey, reason, comment: comment || null })
+  } catch {
+    /* best-effort */
+  }
+}
+
+/** Staff (contributor/admin): load open flags, newest first. */
+export async function loadOpenFlags(): Promise<DbFlag[]> {
+  if (!supabase) return []
+  try {
+    const { data } = await supabase.from('question_flags').select('id, user_id, question_key, reason, comment, status, created_at').eq('status', 'open').order('created_at', { ascending: false })
+    return (data as DbFlag[]) ?? []
+  } catch {
+    return []
+  }
+}
+
+/** Admin: mark a flag resolved. */
+export async function resolveFlag(id: string): Promise<void> {
+  if (!supabase) return
+  try {
+    await supabase.from('question_flags').update({ status: 'resolved' }).eq('id', id)
+  } catch {
+    /* best-effort */
+  }
+}
+
 /** Load published community questions (public) for the Practice bank. */
 export async function loadCommunityQuestions(): Promise<CommunityQuestion[]> {
   if (!supabase) return []

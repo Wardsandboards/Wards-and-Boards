@@ -398,3 +398,10 @@ button.qb-link:hover .qb-name { color:var(--accent); }
   footer { border-top:1px solid var(--border-2); margin-top:40px; padding:26px 0; }
   .foot-inner { max-width:1000px; margin:0 auto; padding:0 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
   .foot-left { font-size:0.82rem; color:var(--dim); } .foot-right { font-size:0.74rem; color:var(--border); font-weight:700; letter-spacing:1px; }
+
+/* Report-a-problem (question flagging) */
+.flag-row { margin-top: 10px; }
+.flag-link { background: none; border: 0; color: var(--dim); font-size: 0.8rem; cursor: pointer; padding: 2px 0; }
+.flag-link:hover { color: var(--mid); text-decoration: underline; }
+.flag-form { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
+.flag-done { margin-top: 10px; font-size: 0.82rem; color: var(--good); font-weight: 600; }

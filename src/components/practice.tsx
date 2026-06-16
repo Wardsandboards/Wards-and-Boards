@@ -2,9 +2,30 @@ import { useState } from 'react'
 import { AnkiButton, QByline } from './common'
 import { ankiCard } from '../lib/anki'
 import { attributionFor } from '../lib/questions'
+import { FLAG_REASONS } from '../constants'
 import type { Author, PracticeItem } from '../types'
 
-export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpenAuthor }: {
+function ReportProblem({ onFlag }: { onFlag: (reason: string, comment: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState(FLAG_REASONS[0])
+  const [comment, setComment] = useState('')
+  const [done, setDone] = useState(false)
+  if (done) return <div className="flag-done">Thanks. The review board will take a look.</div>
+  if (!open) return <button className="flag-link" onClick={() => setOpen(true)}>⚐ Report a problem</button>
+  return (
+    <div className="flag-form">
+      <div className="prompt-q" style={{ marginBottom: 6 }}>What is wrong with this question?</div>
+      <select className="os-input" value={reason} onChange={(e) => setReason(e.target.value)}>{FLAG_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}</select>
+      <textarea className="answer-textarea" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Optional: a few words on the problem." />
+      <div className="case-actions">
+        <button className="submit-btn" style={{ marginTop: 0 }} onClick={() => { onFlag(reason, comment.trim()); setDone(true) }}>Send report</button>
+        <button className="ghost-btn" onClick={() => setOpen(false)}>Cancel</button>
+      </div>
+    </div>
+  )
+}
+
+export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpenAuthor, onFlag }: {
   q: PracticeItem
   picked?: number
   onPick: (i: number) => void
@@ -12,6 +33,7 @@ export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpe
   onRate: (n: number) => void
   onGoCase: () => void
   onOpenAuthor?: (a: Author) => void
+  onFlag?: (reason: string, comment: string) => void
 }) {
   const answered = picked !== undefined
   const correct = answered && picked === q.answerIndex
@@ -48,6 +70,7 @@ export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpe
             {q.caseId && <button className="ghost-btn" onClick={onGoCase}>See the mechanism in Learn → {q.caseTitle}</button>}
           </div></div>
       )}
+      {onFlag && <div className="flag-row"><ReportProblem onFlag={onFlag} /></div>}
     </div>
   )
 }
