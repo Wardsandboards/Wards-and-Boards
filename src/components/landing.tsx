@@ -3,13 +3,14 @@ import { MiniQuestion } from './learn'
 import { LandingPractice } from './practice'
 import type { Case, PracticeItem } from '../types'
 
-export function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLearn, onGoPractice }: {
+export function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, onGoLearn, onGoPractice, onDemo }: {
   exampleCase?: Case
   examplePractice?: PracticeItem
   signedIn: boolean
   onGetStarted: () => void
   onGoLearn: () => void
   onGoPractice: () => void
+  onDemo?: () => void
 }) {
   return (
     <>
@@ -20,7 +21,8 @@ export function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, 
           Understand the mechanism first in Learn, then test your recall in Practice.</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={onGetStarted}>{signedIn ? 'Go to Learn →' : 'Get started →'}</button>
-          <button className="ghost-btn" onClick={onGoPractice}>Try practice questions</button></div>
+          <button className="ghost-btn" onClick={onGoPractice}>Try practice questions</button>
+          {!signedIn && onDemo && <button className="ghost-btn" onClick={onDemo}>Preview as a demo student</button>}</div>
         <div className="hero-note">Written and reviewed by physicians. Physiology checked against current peer-reviewed research.</div>
       </div></header>
       <section className="section" style={{ paddingBottom: 8 }}><div className="wrap">

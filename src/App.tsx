@@ -455,7 +455,7 @@ export default function App() {
 
       {mode === 'home' && <Landing exampleCase={cases[0]} examplePractice={boardQS[0]} signedIn={!!me}
         onGetStarted={() => { if (me) { setActiveId(null); setMode('learn') } else setMode('signin') }}
-        onGoLearn={() => { setActiveId(null); setMode('learn') }} onGoPractice={() => setMode('practice')} />}
+        onGoLearn={() => { setActiveId(null); setMode('learn') }} onGoPractice={() => setMode('practice')} onDemo={startDemo} />}
 
       {mode === 'signin' && <SignIn users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('home') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />}
 
