@@ -44,6 +44,19 @@ describe('ContributorApplication', () => {
   })
 })
 
+describe('demo mode', () => {
+  beforeEach(() => { localStorage.clear(); window.history.pushState(null, '', '/') })
+
+  it('previews as a sample student without signing in, and exits cleanly', () => {
+    render(<App />)
+    fireEvent.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByText(/Preview as a sample student/))
+    expect(screen.getByText(/Demo mode/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Exit demo' }))
+    expect(screen.queryByText(/Demo mode/)).toBeNull()
+  })
+})
+
 // End-to-end of the localStorage (no backend) path: a learner applies, then an
 // admin approves them. This exercises the App-level wiring (pendingApps,
 // decideApp, the admin gate) that the DB path mirrors.

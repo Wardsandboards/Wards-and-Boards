@@ -405,3 +405,10 @@ button.qb-link:hover .qb-name { color:var(--accent); }
 .flag-link:hover { color: var(--mid); text-decoration: underline; }
 .flag-form { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
 .flag-done { margin-top: 10px; font-size: 0.82rem; color: var(--good); font-weight: 600; }
+
+/* Demo mode banner */
+.demo-banner { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+  background: var(--accent); color: #fff; padding: 8px 16px; font-size: 0.86rem; text-align: center; }
+.demo-exit { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 999px; padding: 3px 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.demo-exit:hover { background: rgba(255,255,255,0.3); }
