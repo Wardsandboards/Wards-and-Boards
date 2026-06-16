@@ -10,7 +10,7 @@ import { boardLint } from './lib/boardLint'
 import { authorStub, boardBankFromJson, communityAttribution } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
-import { dbEnabled, loadStudyData, recordAttempt, saveCaseProgress, saveRating } from './lib/db'
+import { dbEnabled, loadStudyData, loadWardAnswers, recordAttempt, saveCaseProgress, saveRating, saveWardAnswer } from './lib/db'
 import { applyForContributor, decideApplication, listPendingApplications, loadAuthors, loadCommunityQuestions, loadContributions, loadMyProfile, loadOpenFlags, profileName, resolveFlag, submitContribution, submitFlag, submitReview, updateProfileSettings } from './lib/contributeDb'
 import type { CommunityQuestion, DbAuthor, DbContribution, DbFlag, DbProfile } from './lib/contributeDb'
 import { WMLogo } from './components/common'
@@ -196,6 +196,10 @@ export default function App() {
       setPst({ att: d.att, rate: d.rate })
       setProgressRaw(d.progress)
     })
+    loadWardAnswers().then((w) => {
+      if (cancelled || !Object.keys(w).length) return
+      setAnswersRaw((prev) => { const np = { ...prev }; Object.keys(w).forEach((cid) => { np[cid] = { ...(np[cid] || {}), ...w[cid] } }); return np })
+    })
     return () => { cancelled = true }
   }, [me?.email])
 
@@ -214,7 +218,7 @@ export default function App() {
         const it = {
           id: 'community-' + c.id, caseId: null, qkey: 'community:' + c.id, caseTitle: '', system: c.system, topic: '',
           vignette: c.vignette, leadIn: c.lead_in, options: c.options, answerIndex: c.answer_index, explanation: c.explanation,
-          source: 'Community', citableId: c.citable_id, attribution: communityAttribution(c),
+          source: 'Community', citableId: c.citable_id, attribution: communityAttribution(c), video: c.video_url,
         } as PracticeItem
         it.lint = boardLint(it)
         return it
@@ -229,6 +233,14 @@ export default function App() {
   const bankList = pcat === 'All' ? QS : QS.filter((q) => categoryOf(q.system) === pcat)
   const pick = (qid: string, i: number, correct: boolean) => { setPicks((s) => ({ ...s, [qid]: i })); if (me) { setPst((s) => { const att = { ...s.att }; att[qid] = [...(att[qid] || []), { correct }]; return { ...s, att } }); recordAttempt(qid, correct) } }
   const rate = (qid: string, n: number) => { setPst((s) => ({ ...s, rate: { ...s.rate, [qid]: n } })); saveRating(qid, n) }
+  // Learn-quiz answers are now recorded as attempts too (they used to record only
+  // case completion), so a learner's answered-question history is complete.
+  const recordLearnAnswer = (questionKey: string, correct: boolean) => {
+    if (!me) return
+    setPst((s) => { const att = { ...s.att }; att[questionKey] = [...(att[questionKey] || []), { correct }]; return { ...s, att } })
+    recordAttempt(questionKey, correct)
+  }
+  const saveWardPrompt = (caseId: string, promptId: string, value: string) => { if (dbOn) saveWardAnswer(caseId, promptId, value) }
   const submitDraft = () => {
     if (!me) return
     const a = boardLint(draft)
@@ -342,6 +354,8 @@ export default function App() {
             ))}
             <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Explanation</div>
             <textarea className="answer-textarea" value={draft.explanation} onChange={(e) => setDraft({ ...draft, explanation: e.target.value })} placeholder="Why the key is right and each distractor is wrong." />
+            <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Video explanation (optional)</div>
+            <input className="os-input" value={draft.video} onChange={(e) => setDraft({ ...draft, video: e.target.value })} placeholder="Paste a YouTube link to embed a short explainer with this question" />
             <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} onClick={submitDraft}>Run Forge gate &amp; submit for peer review</button></div>
             {audit && (
               <div className="feedback" style={{ borderLeftColor: audit.ok ? 'var(--good)' : 'var(--bad)' }}>
@@ -436,7 +450,8 @@ export default function App() {
         : caseData ? (
           <CaseView caseData={caseData} onBack={() => { setActiveId(null); setMode('learn') }} setProgress={setProgress}
             review={review} onToggleReview={toggleReview} answers={answers[caseData.id] || {}} setAnswers={setAnswers}
-            setReasonAnswer={setReasonAnswer} onOpenAuthor={openAuthor} onComplete={(caseId, mode) => saveCaseProgress(caseId, mode)} />
+            setReasonAnswer={setReasonAnswer} onOpenAuthor={openAuthor} onComplete={(caseId, mode) => saveCaseProgress(caseId, mode)}
+            onAnswer={recordLearnAnswer} onSavePrompt={saveWardPrompt} />
         ) : (
           <section className="section" style={{ paddingTop: 30 }}><div className="wrap">
             <WardMomentIntro />

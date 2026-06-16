@@ -153,6 +153,7 @@ export interface CommunityQuestion {
   options: string[]
   answer_index: number
   explanation: string
+  video_url: string | null
   author_id: string
   author_name: string
   author_creds: string
@@ -175,6 +176,7 @@ export async function submitContribution(draft: Draft): Promise<void> {
       options: draft.options,
       answer_index: draft.answerIndex,
       explanation: draft.explanation,
+      video_url: draft.video || null,
     })
   } catch {
     /* best-effort */
@@ -322,7 +324,7 @@ export async function loadCommunityQuestions(): Promise<CommunityQuestion[]> {
   try {
     const { data } = await supabase
       .from('published_questions')
-      .select('id, citable_id, level, system, vignette, lead_in, options, answer_index, explanation, author_id, author_name, author_creds, author_institution, reviewer_names')
+      .select('id, citable_id, level, system, vignette, lead_in, options, answer_index, explanation, video_url, author_id, author_name, author_creds, author_institution, reviewer_names')
       .order('created_at', { ascending: true })
     return ((data ?? []) as Record<string, unknown>[]).map((c) => ({
       id: c.id as string,
@@ -334,6 +336,7 @@ export async function loadCommunityQuestions(): Promise<CommunityQuestion[]> {
       options: (c.options as string[]) || [],
       answer_index: (c.answer_index as number) ?? 0,
       explanation: (c.explanation as string) || '',
+      video_url: (c.video_url as string) ?? null,
       author_id: (c.author_id as string) || '',
       author_name: (c.author_name as string) || 'Contributor',
       author_creds: (c.author_creds as string) || '',

@@ -66,11 +66,12 @@ function CaseVideo({ video }: { video?: string | null }) {
   )
 }
 
-function WardMoment({ wm, answers, onChange, onSaveReason, caseId }: {
+function WardMoment({ wm, answers, onChange, onSaveReason, onSavePrompt, caseId }: {
   wm: WardMomentData
   answers: Record<string, string>
   onChange: (pid: string, v: string) => void
   onSaveReason: (txt: string) => void
+  onSavePrompt?: (pid: string, value: string) => void
   caseId: string
 }) {
   return (
@@ -79,18 +80,19 @@ function WardMoment({ wm, answers, onChange, onSaveReason, caseId }: {
       <div className="ward-scn">{wm.scenario}</div>
       {wm.prompts.map((p) => (
         <Prompt key={p.id} prompt={p} caseId={caseId} value={answers[p.id] || ''} onChange={(v) => onChange(p.id, v)}
-          onSave={() => { if (p.id === 'reason') onSaveReason(answers[p.id] || '') }} />
+          onSave={() => { if (p.id === 'reason') onSaveReason(answers[p.id] || ''); onSavePrompt?.(p.id, answers[p.id] || '') }} />
       ))}
       <div className="ward-why">💡 {wm.why}</div>
     </div>
   )
 }
 
-export function Quiz({ questions, intro, onComplete, caseId }: {
+export function Quiz({ questions, intro, onComplete, caseId, onAnswer }: {
   questions: MS1Question[]
   intro?: string
   onComplete: () => void
   caseId: string
+  onAnswer?: (questionKey: string, correct: boolean) => void
 }) {
   const [current, setCurrent] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
@@ -101,7 +103,7 @@ export function Quiz({ questions, intro, onComplete, caseId }: {
   const total = questions.length
   const pct = ((current + (submitted ? 1 : 0)) / total) * 100
   const reached = questions.slice(0, current + 1).filter((qq) => !qq.placeholder).length - (!q.placeholder && !submitted ? 1 : 0)
-  const submit = () => { if (selected === null) return; setSubmitted(true); if (selected === q.correct) setScore((s) => s + 1) }
+  const submit = () => { if (selected === null || submitted) return; setSubmitted(true); const ok = selected === q.correct; if (ok) setScore((s) => s + 1); if (!q.placeholder) onAnswer?.(caseId + ':' + q.id, ok) }
   const next = () => { if (current + 1 >= total) { onComplete(); return } setCurrent((c) => c + 1); setSelected(null); setSubmitted(false) }
   useEffect(() => { if (current > 0 && blockRef.current) blockRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [current])
   useEffect(() => {
@@ -218,7 +220,7 @@ function MechanismReveal({ mechanism }: { mechanism: Mechanism }) {
   )
 }
 
-export function CaseView({ caseData, onBack, setProgress, review, onToggleReview, answers, setAnswers, setReasonAnswer, onOpenAuthor, onComplete }: {
+export function CaseView({ caseData, onBack, setProgress, review, onToggleReview, answers, setAnswers, setReasonAnswer, onOpenAuthor, onComplete, onAnswer, onSavePrompt }: {
   caseData: Case
   onBack: () => void
   setProgress: (u: (prev: ProgressMap) => ProgressMap) => void
@@ -229,6 +231,8 @@ export function CaseView({ caseData, onBack, setProgress, review, onToggleReview
   setReasonAnswer: (id: string, txt: string) => void
   onOpenAuthor: (a: Author) => void
   onComplete?: (caseId: string, mode: string) => void
+  onAnswer?: (questionKey: string, correct: boolean) => void
+  onSavePrompt?: (caseId: string, promptId: string, value: string) => void
 }) {
   const [mode, setMode] = useState('ms1')
   const [showReveal, setShowReveal] = useState(false)
@@ -248,7 +252,7 @@ export function CaseView({ caseData, onBack, setProgress, review, onToggleReview
       <div className="case-sub">{caseData.system} · {caseData.topic}</div>
       <QByline att={attributionFor(caseData)} onOpenAuthor={onOpenAuthor} />
       <CaseVideo video={caseData.video} />
-      <WardMoment wm={caseData.wardMoment} caseId={caseData.id} answers={answers} onChange={(pid, v) => setAnswers(caseData.id, pid, v)} onSaveReason={(txt) => setReasonAnswer(caseData.id, txt)} />
+      <WardMoment wm={caseData.wardMoment} caseId={caseData.id} answers={answers} onChange={(pid, v) => setAnswers(caseData.id, pid, v)} onSaveReason={(txt) => setReasonAnswer(caseData.id, txt)} onSavePrompt={(pid, v) => onSavePrompt?.(caseData.id, pid, v)} />
       <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{caseData.vignette}</div>
       <div className="modes">{MODES.map((m) => (
         <button key={m.key} className={'mode-btn ' + (mode === m.key ? 'active ' : '') + (!m.live ? 'soon' : '')} onClick={() => switchMode(m.key)}>
@@ -256,7 +260,7 @@ export function CaseView({ caseData, onBack, setProgress, review, onToggleReview
       ))}</div>
       {modeMeta.live ? (
         <>
-          <div key={sessionKey}>{!showReveal && caseData.ms1 && <Quiz questions={caseData.ms1.questions} intro={caseData.ms1.intro} onComplete={complete} caseId={caseData.id} />}</div>
+          <div key={sessionKey}>{!showReveal && caseData.ms1 && <Quiz questions={caseData.ms1.questions} intro={caseData.ms1.intro} onComplete={complete} caseId={caseData.id} onAnswer={onAnswer} />}</div>
           {showReveal && (
             <><div ref={revealRef} style={{ scrollMarginTop: 78 }}><MechanismReveal mechanism={caseData.mechanism} /></div>
               <div className="case-actions"><button className="ghost-btn" onClick={restart}>↺ Restart</button>

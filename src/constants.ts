@@ -30,6 +30,7 @@ export const blankDraft: Draft = {
   options: ['', '', '', '', ''],
   answerIndex: 0,
   explanation: '',
+  video: '',
 }
 
 export const DEFAULT_FS: GraphicConfig = {
