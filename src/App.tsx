@@ -11,13 +11,14 @@ import { boardBankFromJson, communityAttribution } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
 import { dbEnabled, loadStudyData, recordAttempt, saveCaseProgress, saveRating } from './lib/db'
-import { applyForContributor, decideApplication, listPendingApplications, loadCommunityQuestions, loadContributions, loadMyProfile, submitContribution, submitReview } from './lib/contributeDb'
+import { applyForContributor, decideApplication, listPendingApplications, loadCommunityQuestions, loadContributions, loadMyProfile, profileName, submitContribution, submitReview, updateProfileSettings } from './lib/contributeDb'
 import type { CommunityQuestion, DbContribution, DbProfile } from './lib/contributeDb'
 import { WMLogo } from './components/common'
 import { CaseView, LearnLibrary, WardMomentIntro } from './components/learn'
 import { PracticeCard } from './components/practice'
 import { AuthorsView } from './components/authors'
 import { AdminQueue, ContributorApplication, SignIn } from './components/auth'
+import { SettingsView } from './components/settings'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
@@ -38,6 +39,9 @@ export default function App() {
   // published community questions for Practice, both DB-backed when configured.
   const [dbContrib, setDbContrib] = useState<DbContribution[]>([])
   const [dbCommunity, setDbCommunity] = useState<CommunityQuestion[]>([])
+  // Profile settings on the localStorage mock are keyed by email; with a backend
+  // they live on the user's `profile` row instead.
+  const [settings, setSettings] = useState<Record<string, { display_name: string; bio: string; course_code: string }>>(() => loadLS('os_settings', {}))
   // Initial view comes from the URL so cases/tabs are deep-linkable and survive refresh.
   const initialRoute = parseRoute(window.location.pathname)
   const [mode, setMode] = useState(initialRoute.mode)
@@ -93,6 +97,16 @@ export default function App() {
     ? (profile?.role === 'admin' || (profile?.role === 'contributor' && profile?.app_status === 'approved'))
     : (!!me && me.role === 'contributor' && !!me.app && me.app.status === 'approved')
   const appStatus = dbOn ? (profile?.app_status ?? 'none') : (me?.app?.status ?? 'none')
+  // Editable profile settings, and the display name to show for the current user.
+  const mySettings = dbOn
+    ? { display_name: profile?.display_name || '', bio: profile?.bio || '', course_code: profile?.course_code || '' }
+    : (settings[me?.email || ''] || { display_name: '', bio: '', course_code: '' })
+  const myName = me ? (dbOn ? (profileName(profile) || me.name) : (mySettings.display_name || me.name)) : ''
+  const saveSettings = (f: { display_name: string; bio: string; course_code: string }) => {
+    if (dbOn) { updateProfileSettings(f).then((p) => { if (p) setProfile(p) }); return }
+    if (!me) return
+    setSettings((s) => { const np = { ...s, [me.email]: f }; saveLS('os_settings', np); return np })
+  }
   const userName = (email: string) => { const u = auth.users[email]; return (u && u.name) || email || 'Wards & Boards editorial' }
   const signIn = (email: string, name: string) => setAuth((a) => { const u = { ...a.users }; if (!u[email]) u[email] = { name: name || email, email, role: 'learner', app: { status: 'none' } }; return { ...a, users: u, currentEmail: email } })
   const signOut = () => { if (googleEnabled) signOutGoogle(); setProfile(null); setDbPending([]); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
@@ -268,13 +282,13 @@ export default function App() {
     if (!me) return null
     return (
       <section className="section" style={{ paddingTop: 34 }}><div className="wrap">
-        <div className="sec-head"><div className="kicker">Contribute · {me.name}</div><h2 className="h2">Author and peer-review board questions</h2></div>
+        <div className="sec-head"><div className="kicker">Contribute · {myName}</div><h2 className="h2">Author and peer-review board questions</h2></div>
         <div className="step-row">
           <div className="step-card"><div className="step-n">1</div><div><h3>Write it</h3><p>You draft a question; the Forge quality gate checks it against board item-writing rules.</p></div></div>
-          <div className="step-card"><div className="step-n">2</div><div><h3>Peer reviewed</h3><p>Two independent physicians review the item and approve it, request changes, or reject it.</p></div></div>
+          <div className="step-card"><div className="step-n">2</div><div><h3>Peer reviewed</h3><p>The Wards & Boards review board reviews the item and approves it, requests changes, or rejects it.</p></div></div>
           <div className="step-card"><div className="step-n">3</div><div><h3>Selected &amp; published</h3><p>Approved questions are selected into the Practice bank with a citable ID. Learners then rate their quality.</p></div></div>
         </div>
-        <div className="banner">{dbOn ? 'Two independent contributors must approve an item before it publishes to the Practice bank. You cannot review your own questions.' : 'To play out the two-reviewer flow, sign in as different contributors (use the demo accounts): author as one, then approve as two others.'}</div>
+        <div className="banner">{dbOn ? 'The review board approves an item before it publishes to the Practice bank. You cannot review your own questions.' : 'To try the review board flow, sign in as different contributors (use the demo accounts): author as one, then approve as the others.'}</div>
         <div className="cat-tabs">
           <button className={'cat-tab ' + (csub === 'author' ? 'active' : '')} onClick={() => setCsub('author')}>Write a question</button>
           <button className={'cat-tab ' + (csub === 'review' ? 'active' : '')} onClick={() => setCsub('review')}>Review queue<span className="cat-count">{workItems.filter((q) => q.status === 'in_review').length}</span></button>
@@ -317,7 +331,7 @@ export default function App() {
             const ap = q.reviews.filter((r) => r.decision === 'approve').length
             return (
               <div className="qblock" key={q.id}>
-                <div className="qid"><span className="os-badge polish">in review</span> <span style={{ color: 'var(--mid)', textTransform: 'none', letterSpacing: 0, fontWeight: 700, marginLeft: 6 }}>{q.system || 'untagged'} · by {q.authorName} · {ap}/2 approvals</span></div>
+                <div className="qid"><span className="os-badge polish">in review</span> <span style={{ color: 'var(--mid)', textTransform: 'none', letterSpacing: 0, fontWeight: 700, marginLeft: 6 }}>{q.system || 'untagged'} · by {q.authorName} · {ap === 0 ? 'awaiting review board' : ap + ' approved'}</span></div>
                 <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{q.vignette}</div>
                 <p className="qstem">{q.leadIn}</p>
                 <div className="choices">{q.options.map((o, i) => (<div key={i} className={'choice ' + (i === q.answerIndex ? 'correct' : '')}><span className="choice-letter">{String.fromCharCode(65 + i)}</span><span>{o}</span></div>))}</div>
@@ -330,7 +344,7 @@ export default function App() {
                       <button className="submit-btn" style={{ marginTop: 0, background: 'var(--good)' }} onClick={() => reviewItem(q.id, 'approve')}>Approve</button>
                       <button className="ghost-btn" onClick={() => reviewItem(q.id, 'reject')}>Reject</button></div>
                   )}
-                  <div style={{ fontSize: '0.8rem', color: 'var(--dim)', marginTop: 8 }}>Two physician approvals publish the item into the Practice bank and mint its citable ID.</div></div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--dim)', marginTop: 8 }}>The review board approves items before they publish into the Practice bank with a citable ID.</div></div>
               </div>
             )
           }))}
@@ -340,7 +354,7 @@ export default function App() {
               const authored = workItems.filter((q) => q.status === 'published' && q.authorId === myId)
               const reviewed = workItems.filter((q) => q.status === 'published' && q.reviews && q.reviews.some((r) => r.reviewerId === myId && r.decision === 'approve'))
               const cred = dbOn ? (profile?.training || '') : (me.app && me.app.training ? me.app.training : '')
-              const lines = [me.name + (cred ? ', ' + cred : ''), 'Wards & Boards Question Commons, contribution record (as of June 2026)', '', 'PEER-REVIEWED QUESTIONS AUTHORED (' + authored.length + '):']
+              const lines = [myName + (cred ? ', ' + cred : ''), 'Wards & Boards Question Commons, contribution record (as of June 2026)', '', 'PEER-REVIEWED QUESTIONS AUTHORED (' + authored.length + '):']
               authored.forEach((q) => lines.push('  ' + q.citableId + '  ' + (q.system || '') + ' (' + (q.level === 'step1' ? 'Step 1' : 'Shelf') + '). Reviewers: ' + q.reviews.filter((r) => r.decision === 'approve').map((r) => r.reviewerName).join(', ') + '.'))
               if (!authored.length) lines.push('  (none yet)')
               lines.push('', 'PEER REVIEW SERVICE (' + reviewed.length + '):')
@@ -349,7 +363,7 @@ export default function App() {
               const text = lines.join('\n')
               return (
                 <div><div className="reveal-title">Citable contribution record</div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--mid)', margin: '6px 0 12px' }}>Every published item is a citable micro-publication, creditable to its author and both reviewers, the incentive that builds the bank through credit rather than cash.</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--mid)', margin: '6px 0 12px' }}>Every published item is a citable micro-publication, creditable to its author and its reviewers, the incentive that builds the bank through credit rather than cash.</p>
                   <pre className="os-pre">{text}</pre>
                   <button className="os-link" style={{ marginTop: 10 }} onClick={() => navigator.clipboard.writeText(text)}>Copy for CV</button></div>
               )
@@ -375,8 +389,9 @@ export default function App() {
         </div>
         <div className="nav-user">
           {me ? (
-            <span className="usermenu"><span className="userchip">{me.name}</span>
+            <span className="usermenu"><button className="userchip" style={{ background: 'none', border: 0, cursor: 'pointer', font: 'inherit', color: 'inherit' }} onClick={() => setMode('settings')}>{myName}</button>
               <span className={'rolebadge ' + (isAdmin ? 'admin' : isContributor ? 'contributor' : 'learner')}>{isAdmin ? 'admin' : isContributor ? 'contributor' : 'learner'}</span>
+              <button className="nav-link" onClick={() => setMode('settings')}>Settings</button>
               <button className="nav-link" onClick={signOut}>Sign out</button></span>
           ) : <button className="nav-link" onClick={() => setMode('signin')}>Sign in</button>}
           <button className="theme-toggle" title="Toggle light / dark" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}>{theme === 'dark' ? '☀️' : '🌙'}</button>
@@ -411,6 +426,10 @@ export default function App() {
       {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} />}
 
       {mode === 'about' && <AboutView />}
+
+      {mode === 'settings' && (me
+        ? <SettingsView fallbackName={me.name} email={me.email} displayName={mySettings.display_name} bio={mySettings.bio} courseCode={mySettings.course_code} onSave={saveSettings} />
+        : <SignIn intent="Settings" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('settings') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />)}
 
       {mode === 'privacy' && <PrivacyView />}
 

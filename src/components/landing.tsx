@@ -36,17 +36,17 @@ export function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, 
       </div></section>
       <section className="section" style={{ paddingTop: 8 }}><div className="wrap">
         <div className="sec-head"><div className="kicker">Quality</div><h2 className="h2">How the questions are made</h2>
-          <p className="sec-lead">Every question is written by a physician and independently peer-reviewed by two more before it is selected into the bank, the same one-best-answer standard used on board exams.</p></div>
+          <p className="sec-lead">Every question is written by a physician and reviewed by the Wards & Boards review board before it is selected into the bank, the same one-best-answer standard used on board exams.</p></div>
         <div className="step-row">
           <div className="step-card"><div className="step-n">1</div><div><h3>Written by physicians</h3><p>A physician or resident drafts each question and runs it through an automated quality gate for board item-writing rules.</p></div></div>
-          <div className="step-card"><div className="step-n">2</div><div><h3>Peer-reviewed twice</h3><p>Two independent physicians review the item for accuracy and fairness before it can be published.</p></div></div>
+          <div className="step-card"><div className="step-n">2</div><div><h3>Reviewed by the board</h3><p>The Wards & Boards review board reviews the item for accuracy and fairness before it can be published.</p></div></div>
           <div className="step-card"><div className="step-n">3</div><div><h3>Selected and published</h3><p>Approved questions are selected into the bank, and learners can rate their quality over time.</p></div></div>
         </div>
         <div className="contrib-callout"><div className="kicker">Contribute</div>
           <h3>Write a question, earn a citable publication</h3>
           <p>Physicians and residents can author and review questions. Each accepted item becomes a peer-reviewed, citable micro-publication with a stable identifier, credit you can list on a CV.</p>
-          <div className="mini-steps"><span className="mini-step">1 · Write it</span><span className="mini-arrow">→</span><span className="mini-step">2 · Peer-reviewed by two physicians</span><span className="mini-arrow">→</span><span className="mini-step">3 · Published and citable</span></div>
-          <div className="cite-example"><div className="cite-h">Example citation</div><code>Rivera A. Decompensated heart failure and the Frank-Starling relationship. Wards & Boards Question Commons, 2026; WB-2026-0007. Peer-reviewed by Chen M, Okafor T.</code></div>
+          <div className="mini-steps"><span className="mini-step">1 · Write it</span><span className="mini-arrow">→</span><span className="mini-step">2 · Reviewed by the board</span><span className="mini-arrow">→</span><span className="mini-step">3 · Published and citable</span></div>
+          <div className="cite-example"><div className="cite-h">Example citation</div><code>Rivera A. Decompensated heart failure and the Frank-Starling relationship. Wards & Boards Question Commons, 2026; WB-2026-0007. Reviewed by the Wards & Boards review board.</code></div>
         </div>
       </div></section>
       <section className="section" style={{ paddingTop: 8 }}><div className="wrap">

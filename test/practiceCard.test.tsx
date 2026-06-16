@@ -41,7 +41,7 @@ describe('PracticeCard', () => {
     const { container } = render(<PracticeCard q={community} picked={2} onPick={noop} rated={0} onRate={noop} onGoCase={noop} onOpenAuthor={onOpenAuthor} />)
     const byline = container.querySelector('.q-byline') as HTMLElement
     expect(byline.textContent).toContain('Dr. Lee')
-    expect(screen.getByText(/Peer-reviewed by/)).toBeTruthy()
+    expect(screen.getByText(/review board/)).toBeTruthy()
     // The byline is a plain span (no profile page for real authors yet), not a button.
     expect(byline.querySelector('button')).toBeNull()
     expect(onOpenAuthor).not.toHaveBeenCalled()

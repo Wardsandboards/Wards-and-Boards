@@ -3,7 +3,7 @@ import { AuAvatar, AuBadge, QByline } from './common'
 import { BADGE_CATALOG, COMMUNITY_AUTHORS } from '../data/authors'
 import type { Author } from '../types'
 
-function AuQuestion({ author, reviewers, onOpenAuthor }: { author: Author; reviewers: Author[]; onOpenAuthor?: (a: Author) => void }) {
+function AuQuestion({ author, onOpenAuthor }: { author: Author; onOpenAuthor?: (a: Author) => void }) {
   return (
     <div className="aq-card">
       <QByline att={{ author }} onOpenAuthor={onOpenAuthor} cite={author.qs[0][3]} />
@@ -15,7 +15,7 @@ function AuQuestion({ author, reviewers, onOpenAuthor }: { author: Author; revie
         <button className="choice" disabled><span className="choice-letter">C</span><span>Stroke volume falls. Reducing preload lowers output even on a depressed curve.</span></button>
       </div>
       <div className="aq-foot">
-        <span>Peer-reviewed by <b>{reviewers[0].name}</b> and <b>{reviewers[1].name}</b></span>
+        <span>Reviewed by the <b>Wards & Boards review board</b></span>
       </div>
     </div>
   )
@@ -65,10 +65,10 @@ export function AuthorsView({ sel, setSel }: { sel: Author | null; setSel: (a: A
   return (
     <section className="section" style={{ paddingTop: 34 }}><div className="wrap" style={{ maxWidth: 820 }}>
       <div className="sec-head"><div className="kicker">Authors</div><h2 className="h2">Credit where it is due</h2>
-        <p className="sec-lead">Every question carries its author and the two physicians who peer-reviewed it. The contributors are residents and junior faculty, and each published item is a citable line on a CV with your name on it for good.</p></div>
+        <p className="sec-lead">Every question carries its author and is reviewed by the Wards & Boards review board. The contributors are residents and junior faculty, and each published item is a citable line on a CV with your name on it for good.</p></div>
       <div className="author-hero">
         <div className="kicker" style={{ marginBottom: 10 }}>What a published question looks like</div>
-        <AuQuestion author={COMMUNITY_AUTHORS[0]} reviewers={[COMMUNITY_AUTHORS[1], COMMUNITY_AUTHORS[2]]} onOpenAuthor={setSel} />
+        <AuQuestion author={COMMUNITY_AUTHORS[0]} onOpenAuthor={setSel} />
       </div>
       <div className="sec-head"><div className="kicker">Leaderboard</div><h2 className="h2">Top authors</h2>
         <p className="sec-lead">Ranked by questions published and peer reviews. Open an author to see their page and follow them, so a new question from a writer you trust finds you.</p></div>

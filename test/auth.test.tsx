@@ -97,7 +97,7 @@ describe('contributor flow (mock backend)', () => {
     fireEvent.click(screen.getByText('Dr. Okafor'))
     navClick('Contribute')
     fireEvent.click(screen.getByRole('button', { name: /Review queue/ }))
-    expect(screen.getByText(/1\/2 approvals/)).toBeTruthy()
+    expect(screen.getByText(/1 approved/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
 
     // It leaves the review queue and appears in the Practice bank as Community.

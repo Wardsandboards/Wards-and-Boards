@@ -42,7 +42,7 @@ export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpe
         <div className={'feedback ' + (correct ? '' : 'bad')}>
           <div className="fb-result" style={{ color: correct ? 'var(--good)' : 'var(--bad)' }}>{correct ? '✓ Correct' : '✗ Not quite'}</div>
           {q.explanation}
-          <div className="qb-rev">Authored by <b>{att.author.name}</b>. Peer-reviewed by <b>{att.reviewers[0].name}</b> and <b>{att.reviewers[1].name}</b>.</div>
+          <div className="qb-rev">Authored by <b>{att.author.name}</b>. Reviewed by the <b>Wards & Boards review board</b>.</div>
           <div className="case-actions">
             <span className="os-stars">{[1, 2, 3, 4, 5].map((n) => <span key={n} onClick={() => onRate(n)}>{n <= rated ? <b>★</b> : '☆'}</span>)}</span>
             {q.caseId && <button className="ghost-btn" onClick={onGoCase}>See the mechanism in Learn → {q.caseTitle}</button>}

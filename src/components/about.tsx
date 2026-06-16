@@ -22,7 +22,7 @@ export function AboutView() {
         <div className="sec-head"><div className="kicker">The model</div><h2 className="h2">Written by physicians, credited to physicians, open to every student</h2></div>
         <div className="step-row g4">
           <div className="step-card"><div className="step-n">→</div><div><h3>Learn first</h3><p>Short ward-moment cases with interactive graphs build understanding before recall.</p></div></div>
-          <div className="step-card"><div className="step-n">→</div><div><h3>Practice second</h3><p>Board-style questions on the same topics, each written by a physician, peer-reviewed by two more, and citable.</p></div></div>
+          <div className="step-card"><div className="step-n">→</div><div><h3>Practice second</h3><p>Board-style questions on the same topics, each written by a physician, reviewed by the review board, and citable.</p></div></div>
           <div className="step-card"><div className="step-n">→</div><div><h3>Credit for your work</h3><p>Contributors build a public, citable record of their teaching work, with their name on every published question.</p></div></div>
           <div className="step-card"><div className="step-n">→</div><div><h3>An open commons</h3><p>Like the open-knowledge resources that already shape medicine, it gets better as more contribute and more learn.</p></div></div>
         </div>
@@ -34,7 +34,7 @@ export function AboutView() {
         <div className="step-row g4">
           <div className="step-card"><div className="step-n">✓</div><div><h3>Open to every student</h3><p>The strongest board prep is often the most expensive, and the students who need it most can least afford it. This is open to use.</p></div></div>
           <div className="step-card"><div className="step-n">✓</div><div><h3>Written by named physicians</h3><p>Students and faculty trust a resource written and reviewed by physicians who put their name on it in a way they will never trust an algorithm-written question bank.</p></div></div>
-          <div className="step-card"><div className="step-n">✓</div><div><h3>Held to board standards</h3><p>Every question is written to the same item-writing rigor used on the board exams, then peer-reviewed by two physicians before it publishes.</p></div></div>
+          <div className="step-card"><div className="step-n">✓</div><div><h3>Held to board standards</h3><p>Every question is written to the same item-writing rigor used on the board exams, then reviewed by the Wards & Boards review board before it publishes.</p></div></div>
           <div className="step-card"><div className="step-n">✓</div><div><h3>An open commons</h3><p>The more physicians contribute and the more students learn from it, the better it gets for everyone.</p></div></div>
         </div>
       </div></section>
