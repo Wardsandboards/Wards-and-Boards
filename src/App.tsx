@@ -46,6 +46,9 @@ export default function App() {
   // Profile settings on the localStorage mock are keyed by email; with a backend
   // they live on the user's `profile` row instead.
   const [settings, setSettings] = useState<Record<string, { display_name: string; bio: string; course_code: string }>>(() => loadLS('os_settings', {}))
+  // Demo mode: explore as a sample student without signing in. It runs entirely on
+  // the local mock (no real backend writes), so nothing is saved to a real account.
+  const [demoMode, setDemoMode] = useState(false)
   // Initial view comes from the URL so cases/tabs are deep-linkable and survive refresh.
   const initialRoute = parseRoute(window.location.pathname)
   const [mode, setMode] = useState(initialRoute.mode)
@@ -94,7 +97,7 @@ export default function App() {
   // ---- auth ----
   // With a backend, roles + application status are authoritative from `profile`
   // (the DB). On the localStorage mock they come from the local user record.
-  const dbOn = dbEnabled()
+  const dbOn = dbEnabled() && !demoMode
   const me = auth.currentEmail ? auth.users[auth.currentEmail] : null
   const isAdmin = dbOn ? profile?.role === 'admin' : (!!me && ADMIN_EMAILS.includes(me.email))
   const isContributor = dbOn
@@ -114,6 +117,9 @@ export default function App() {
   const userName = (email: string) => { const u = auth.users[email]; return (u && u.name) || email || 'Wards & Boards editorial' }
   const signIn = (email: string, name: string) => setAuth((a) => { const u = { ...a.users }; if (!u[email]) u[email] = { name: name || email, email, role: 'learner', app: { status: 'none' } }; return { ...a, users: u, currentEmail: email } })
   const signOut = () => { if (googleEnabled) signOutGoogle(); setProfile(null); setDbPending([]); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
+  // Enter a sample-student demo (local only), and leave it cleanly.
+  const startDemo = () => { setProfile(null); setDemoMode(true); signIn('demo.student@wardsandboards.com', 'Demo Student'); setActiveId(null); setMode('learn') }
+  const exitDemo = () => { setDemoMode(false); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
   const applyContributor = (form: { training: string; institution: string; npi: string }) => {
     if (dbOn) { applyForContributor(form).then((p) => { if (p) setProfile(p) }); return }
     setAuth((a) => {
@@ -440,13 +446,20 @@ export default function App() {
         </div>
       </div></nav>
 
+      {demoMode && (
+        <div className="demo-banner">
+          <span><b>Demo mode</b> · you are exploring as a sample student. Nothing you do is saved.</span>
+          <button className="demo-exit" onClick={exitDemo}>Exit demo</button>
+        </div>
+      )}
+
       {mode === 'home' && <Landing exampleCase={cases[0]} examplePractice={boardQS[0]} signedIn={!!me}
         onGetStarted={() => { if (me) { setActiveId(null); setMode('learn') } else setMode('signin') }}
         onGoLearn={() => { setActiveId(null); setMode('learn') }} onGoPractice={() => setMode('practice')} />}
 
-      {mode === 'signin' && <SignIn users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('home') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />}
+      {mode === 'signin' && <SignIn users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('home') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />}
 
-      {mode === 'learn' && (!me ? <SignIn intent="Learn" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('learn') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />
+      {mode === 'learn' && (!me ? <SignIn intent="Learn" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('learn') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />
         : caseData ? (
           <CaseView caseData={caseData} onBack={() => { setActiveId(null); setMode('learn') }} setProgress={setProgress}
             review={review} onToggleReview={toggleReview} answers={answers[caseData.id] || {}} setAnswers={setAnswers}
@@ -460,9 +473,9 @@ export default function App() {
           </div></section>
         ))}
 
-      {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} /> : <PracticeView />)}
+      {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} /> : <PracticeView />)}
 
-      {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />
+      {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />
         : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication name={me.name} appStatus={appStatus} onApply={applyContributor} /></div></section>
           : <ContributeWorkspace />)}
 
@@ -472,7 +485,7 @@ export default function App() {
 
       {mode === 'settings' && (me
         ? <SettingsView fallbackName={me.name} email={me.email} displayName={mySettings.display_name} bio={mySettings.bio} courseCode={mySettings.course_code} onSave={saveSettings} />
-        : <SignIn intent="Settings" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('settings') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} />)}
+        : <SignIn intent="Settings" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('settings') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />)}
 
       {mode === 'privacy' && <PrivacyView />}
 

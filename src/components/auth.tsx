@@ -18,12 +18,13 @@ export function FlagQueue({ flags, onResolve }: { flags: { id: string; question_
   )
 }
 
-export function SignIn({ intent, users, onSignIn, onGoogle, googleLive }: {
+export function SignIn({ intent, users, onSignIn, onGoogle, googleLive, onDemo }: {
   intent?: string
   users: Record<string, User>
   onSignIn: (email: string, name: string) => void
   onGoogle?: () => void
   googleLive?: boolean
+  onDemo?: () => void
 }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -34,6 +35,10 @@ export function SignIn({ intent, users, onSignIn, onGoogle, googleLive }: {
         <h2 className="h2" style={{ marginBottom: 8 }}>Sign in to Wards & Boards</h2>
         <p className="sec-lead" style={{ marginTop: 0 }}>Learners get in instantly. To author or review questions, you apply to become a contributor after signing in.</p>
         <button className="btn btn-primary g-btn" style={{ marginTop: 8 }} onClick={() => (onGoogle ? onGoogle() : onSignIn('you@med.school', 'You'))}>Continue with Google {!googleLive && <span className="g-note">demo</span>}</button>
+        {onDemo && (<>
+          <button className="btn ghost-btn" style={{ marginTop: 10, width: '100%' }} onClick={onDemo}>Preview as a sample student →</button>
+          <p className="g-note" style={{ marginTop: 8 }}>No account needed. Explore the product as a demo student; nothing is saved.</p>
+        </>)}
         {googleLive && <p className="g-note" style={{ marginTop: 12 }}>For medical students and physicians. We only use your Google name and email to create your account.</p>}
         {!googleLive && (<>
         <div className="or">or use your name and email</div>
