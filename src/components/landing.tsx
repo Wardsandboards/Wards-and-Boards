@@ -14,7 +14,7 @@ export function Landing({ exampleCase, examplePractice, signedIn, onGetStarted, 
   return (
     <>
       <header className="hero"><div className="wrap">
-        <div className="hero-eyebrow">Clinical physiology, free for students</div>
+        <div className="hero-eyebrow">Clinical physiology for medical students</div>
         <h1>Climb from the basics to <em>wards and boards</em>.</h1>
         <p className="hero-sub">Wards & Boards pairs short teaching cases with board questions peer-reviewed by physicians, all on the same topics.
           Understand the mechanism first in Learn, then test your recall in Practice.</p>

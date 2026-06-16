@@ -3,8 +3,8 @@ export function AboutView() {
     <>
       <header className="hero"><div className="wrap">
         <div className="hero-eyebrow">About Wards & Boards</div>
-        <h1>A free, open resource for <em>clinical physiology</em>.</h1>
-        <p className="hero-sub">Wards & Boards is a free teaching resource that helps medical students understand the mechanism behind the medicine, then practice it with board-style questions. Written and reviewed by physicians. No paywall, no ads, no catch.</p>
+        <h1>A physician-written resource for <em>clinical physiology</em>.</h1>
+        <p className="hero-sub">Wards & Boards helps medical students understand the mechanism behind the medicine, then practice it with board-style questions. Every question is written and reviewed by physicians.</p>
       </div></header>
 
       <section className="section"><div className="wrap">
@@ -19,7 +19,7 @@ export function AboutView() {
       </div></section>
 
       <section className="section" style={{ paddingTop: 8 }}><div className="wrap">
-        <div className="sec-head"><div className="kicker">The model</div><h2 className="h2">Written by physicians, credited to physicians, free to every student</h2></div>
+        <div className="sec-head"><div className="kicker">The model</div><h2 className="h2">Written by physicians, credited to physicians, open to every student</h2></div>
         <div className="step-row g4">
           <div className="step-card"><div className="step-n">→</div><div><h3>Learn first</h3><p>Short ward-moment cases with interactive graphs build understanding before recall.</p></div></div>
           <div className="step-card"><div className="step-n">→</div><div><h3>Practice second</h3><p>Board-style questions on the same topics, each written by a physician, peer-reviewed by two more, and citable.</p></div></div>
@@ -29,12 +29,12 @@ export function AboutView() {
       </div></section>
 
       <section className="section" style={{ paddingTop: 8 }}><div className="wrap">
-        <div className="sec-head"><div className="kicker">Why it is free</div><h2 className="h2">Free, and built to stay that way</h2>
-          <p className="sec-lead">Free is not a launch promotion here. It is the whole idea.</p></div>
+        <div className="sec-head"><div className="kicker">Why trust it</div><h2 className="h2">Built to be understood, and to be trusted</h2>
+          <p className="sec-lead">What makes a question bank worth using is who stands behind it and how carefully it is made.</p></div>
         <div className="step-row g4">
-          <div className="step-card"><div className="step-n">✓</div><div><h3>Free for every student</h3><p>The students who need good board prep most are often the ones who can least afford it. Cost should not decide who keeps up.</p></div></div>
-          <div className="step-card"><div className="step-n">✓</div><div><h3>Built on trust</h3><p>Students and faculty trust an open, physician-written resource in a way they will never trust an algorithm-written question bank. Openness earns that trust.</p></div></div>
-          <div className="step-card"><div className="step-n">✓</div><div><h3>No ads, no upsell</h3><p>Nothing here is a funnel to a paid tier. What you see is the whole thing, and it stays that way.</p></div></div>
+          <div className="step-card"><div className="step-n">✓</div><div><h3>Open to every student</h3><p>The strongest board prep is often the most expensive, and the students who need it most can least afford it. This is open to use.</p></div></div>
+          <div className="step-card"><div className="step-n">✓</div><div><h3>Written by named physicians</h3><p>Students and faculty trust a resource written and reviewed by physicians who put their name on it in a way they will never trust an algorithm-written question bank.</p></div></div>
+          <div className="step-card"><div className="step-n">✓</div><div><h3>Held to board standards</h3><p>Every question is written to the same item-writing rigor used on the board exams, then peer-reviewed by two physicians before it publishes.</p></div></div>
           <div className="step-card"><div className="step-n">✓</div><div><h3>An open commons</h3><p>The more physicians contribute and the more students learn from it, the better it gets for everyone.</p></div></div>
         </div>
       </div></section>
