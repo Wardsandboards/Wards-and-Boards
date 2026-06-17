@@ -1,7 +1,7 @@
 import type { ReactNode, CSSProperties } from 'react'
 
 // Update this to wherever you want to receive privacy/legal questions.
-const CONTACT_EMAIL = 'contact@wardsandboards.com'
+const CONTACT_EMAIL = 'povmdco@gmail.com'
 const LAST_UPDATED = 'June 12, 2026'
 
 const para: CSSProperties = { fontSize: '1rem', color: 'var(--ink-soft)', lineHeight: 1.7, margin: '0 0 12px' }

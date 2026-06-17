@@ -72,6 +72,7 @@ export default function App() {
   const [, setReasonsRaw] = useState<Record<string, string>>(() => loadLS('os_reasons', {}))
   const [psub, setPsub] = useState('bank')
   const [pcat, setPcat] = useState('All')
+  const [pq, setPq] = useState('')
   const [pst, setPst] = useState<PracticeStore>(() => loadLS('os_practice', { att: {}, rate: {} }))
   const [picks, setPicks] = useState<Record<string, number>>({})
   const [boardQS] = useState<PracticeItem[]>(() => boardBankFromJson())
@@ -234,6 +235,12 @@ export default function App() {
   const goHome = () => { setMode('home'); setActiveId(null) }
   const goCase = (id: string | null) => { setMode('learn'); setActiveId(id) }
   const caseData = cases.find((c) => c.id === activeId)
+  // Per-page document title (SEO + tab clarity).
+  useEffect(() => {
+    const labels: Record<string, string> = { learn: 'Learn', practice: 'Practice', contribute: 'Contribute', authors: 'Authors', about: 'About', admin: 'Admin', settings: 'Settings', teach: 'Teach', signin: 'Sign in', privacy: 'Privacy', terms: 'Terms' }
+    const seg = mode === 'learn' && caseData ? caseData.title : labels[mode] || ''
+    document.title = seg ? seg + ' · Wards & Boards' : 'Wards & Boards · learn the why, then practice the questions'
+  }, [mode, caseData])
 
   const pubContrib: PracticeItem[] = dbOn
     ? dbCommunity.map((c) => {
@@ -331,7 +338,8 @@ export default function App() {
         <>
           <div className="banner">{boardQS.length} board questions written from {caseCount} Ward Moments cases and run through the Forge gate{pubContrib.length ? ', plus ' + pubContrib.length + ' community-published' : ''}. {ready} of {QS.length} pass every hard board-exam check. Each links back to its case in Learn.</div>
           <div className="cat-tabs">{bankCats.map((t) => { const count = t === 'All' ? QS.length : QS.filter((q) => categoryOf(q.system) === t).length; return (<button key={t} className={'cat-tab ' + (pcat === t ? 'active' : '')} onClick={() => setPcat(t)}>{t === 'All' ? 'All topics' : t}<span className="cat-count">{count}</span></button>) })}</div>
-          <PracticeBank list={bankList} empty={<p>No questions in this category yet.</p>} />
+          <input className="os-input" style={{ marginBottom: 14 }} value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Search questions by topic, system, or keyword" />
+          <PracticeBank list={pq.trim() ? bankList.filter((q) => (q.vignette + ' ' + q.leadIn + ' ' + q.system + ' ' + q.topic).toLowerCase().includes(pq.trim().toLowerCase())) : bankList} empty={<p>No questions match your search.</p>} />
         </>
       )}
       {psub === 'srq' && (
