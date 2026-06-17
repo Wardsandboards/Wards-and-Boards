@@ -22,6 +22,9 @@ import type { GameStats } from './lib/gamify'
 import { AuthorsView } from './components/authors'
 import { AdminQueue, ContributorApplication, FlagQueue, SignIn } from './components/auth'
 import { SettingsView } from './components/settings'
+import { TeachView } from './components/teach'
+import { createCourse, loadCohort, loadMyCourses } from './lib/courses'
+import type { Course } from './lib/courses'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
@@ -43,6 +46,7 @@ export default function App() {
   const [dbContrib, setDbContrib] = useState<DbContribution[]>([])
   const [dbCommunity, setDbCommunity] = useState<CommunityQuestion[]>([])
   const [dbAuthors, setDbAuthors] = useState<DbAuthor[]>([])
+  const [dbCourses, setDbCourses] = useState<Course[]>([])
   // Question flags: DB-backed when configured; localStorage on the mock.
   const [dbFlags, setDbFlags] = useState<DbFlag[]>([])
   const [mockFlags, setMockFlags] = useState<DbFlag[]>(() => loadLS('os_flags', []))
@@ -68,6 +72,7 @@ export default function App() {
   const [, setReasonsRaw] = useState<Record<string, string>>(() => loadLS('os_reasons', {}))
   const [psub, setPsub] = useState('bank')
   const [pcat, setPcat] = useState('All')
+  const [pq, setPq] = useState('')
   const [pst, setPst] = useState<PracticeStore>(() => loadLS('os_practice', { att: {}, rate: {} }))
   const [picks, setPicks] = useState<Record<string, number>>({})
   const [boardQS] = useState<PracticeItem[]>(() => boardBankFromJson())
@@ -142,6 +147,8 @@ export default function App() {
   const refreshCommunity = () => { if (dbEnabled()) loadCommunityQuestions().then(setDbCommunity) }
   const refreshAuthors = () => { if (dbEnabled()) loadAuthors().then(setDbAuthors) }
   const refreshFlags = () => { if (dbEnabled()) loadOpenFlags().then(setDbFlags) }
+  const refreshCourses = () => { if (dbEnabled()) loadMyCourses().then(setDbCourses) }
+  const onCreateCourse = (name: string) => { createCourse(name).then((c) => { if (c) refreshCourses() }) }
   const flagQuestion = (questionKey: string, reason: string, comment: string) => {
     if (!me) return
     if (dbOn) { submitFlag(questionKey, reason, comment); return }
@@ -199,7 +206,7 @@ export default function App() {
   // Published community questions (Practice bank) are public; load them once the
   // backend is on. The workspace items follow the signed-in contributor.
   useEffect(() => { refreshCommunity(); refreshAuthors() }, [])
-  useEffect(() => { if (me && dbEnabled()) refreshContrib() }, [me?.email])
+  useEffect(() => { if (me && dbEnabled()) { refreshContrib(); refreshCourses() } }, [me?.email])
 
   // Once signed in with a real backend, load this user's study data from Supabase
   // so progress, ratings, and attempts follow them across devices.
@@ -228,6 +235,12 @@ export default function App() {
   const goHome = () => { setMode('home'); setActiveId(null) }
   const goCase = (id: string | null) => { setMode('learn'); setActiveId(id) }
   const caseData = cases.find((c) => c.id === activeId)
+  // Per-page document title (SEO + tab clarity).
+  useEffect(() => {
+    const labels: Record<string, string> = { learn: 'Learn', practice: 'Practice', contribute: 'Contribute', authors: 'Authors', about: 'About', admin: 'Admin', settings: 'Settings', teach: 'Teach', signin: 'Sign in', privacy: 'Privacy', terms: 'Terms' }
+    const seg = mode === 'learn' && caseData ? caseData.title : labels[mode] || ''
+    document.title = seg ? seg + ' · Wards & Boards' : 'Wards & Boards · learn the why, then practice the questions'
+  }, [mode, caseData])
 
   const pubContrib: PracticeItem[] = dbOn
     ? dbCommunity.map((c) => {
@@ -247,12 +260,13 @@ export default function App() {
   const due = QS.filter((q) => { const l = lastAtt(q.id); return l && !l.correct })
   const bankCats = (() => { const pr: string[] = []; CATEGORY_ORDER.forEach((k) => { if (QS.some((q) => categoryOf(q.system) === k)) pr.push(k) }); QS.forEach((q) => { const k = categoryOf(q.system); if (!pr.includes(k)) pr.push(k) }); return ['All', ...pr] })()
   const bankList = pcat === 'All' ? QS : QS.filter((q) => categoryOf(q.system) === pcat)
+  // Map every answer key (Practice ids + qkeys, Learn case:question keys) to a system.
+  const keySystem: Record<string, string> = {}
+  QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
+  cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
   // Gamification stats, computed from every answered question (Practice + Learn),
   // completed cases, and study days. Used by both the nav chip and My progress.
   const gameStats: GameStats = (() => {
-    const keySystem: Record<string, string> = {}
-    QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
-    cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
     let answers = 0, correct = 0
     const seen = new Set<string>()
     const bySys: Record<string, { c: number; t: number }> = {}
@@ -324,7 +338,8 @@ export default function App() {
         <>
           <div className="banner">{boardQS.length} board questions written from {caseCount} Ward Moments cases and run through the Forge gate{pubContrib.length ? ', plus ' + pubContrib.length + ' community-published' : ''}. {ready} of {QS.length} pass every hard board-exam check. Each links back to its case in Learn.</div>
           <div className="cat-tabs">{bankCats.map((t) => { const count = t === 'All' ? QS.length : QS.filter((q) => categoryOf(q.system) === t).length; return (<button key={t} className={'cat-tab ' + (pcat === t ? 'active' : '')} onClick={() => setPcat(t)}>{t === 'All' ? 'All topics' : t}<span className="cat-count">{count}</span></button>) })}</div>
-          <PracticeBank list={bankList} empty={<p>No questions in this category yet.</p>} />
+          <input className="os-input" style={{ marginBottom: 14 }} value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Search questions by topic, system, or keyword" />
+          <PracticeBank list={pq.trim() ? bankList.filter((q) => (q.vignette + ' ' + q.leadIn + ' ' + q.system + ' ' + q.topic).toLowerCase().includes(pq.trim().toLowerCase())) : bankList} empty={<p>No questions match your search.</p>} />
         </>
       )}
       {psub === 'srq' && (
@@ -446,6 +461,7 @@ export default function App() {
           <button className={'nav-link ' + (mode === 'contribute' ? 'active' : '')} onClick={() => setMode('contribute')}>Contribute</button>
           <button className={'nav-link ' + (mode === 'authors' ? 'active' : '')} onClick={() => { setAuthorSel(null); setMode('authors') }}>Authors</button>
           <button className={'nav-link ' + (mode === 'about' ? 'active' : '')} onClick={() => setMode('about')}>About</button>
+          {me && <button className={'nav-link ' + (mode === 'teach' ? 'active' : '')} onClick={() => setMode('teach')}>Teach</button>}
           {isAdmin && <button className={'nav-link ' + (mode === 'admin' ? 'active' : '')} onClick={() => setMode('admin')}>Admin</button>}
         </div>
         <div className="nav-user">
@@ -496,6 +512,10 @@ export default function App() {
       {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} authors={showRealAuthors ? realAuthors : undefined} isReal={showRealAuthors} />}
 
       {mode === 'about' && <AboutView />}
+
+      {mode === 'teach' && (me
+        ? <TeachView courses={dbCourses} onCreate={onCreateCourse} onLoadCohort={loadCohort} keySystem={keySystem} />
+        : <SignIn intent="Teach" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('teach') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />)}
 
       {mode === 'settings' && (me
         ? <SettingsView fallbackName={me.name} email={me.email} displayName={mySettings.display_name} bio={mySettings.bio} courseCode={mySettings.course_code} onSave={saveSettings} />
