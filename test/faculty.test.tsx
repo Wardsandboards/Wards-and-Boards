@@ -15,9 +15,10 @@ describe('Faculty tab + demo instructor', () => {
     fireEvent.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Faculty' }))
     // Gated view offers an instructor demo.
     fireEvent.click(screen.getByText(/Preview as a sample instructor/))
-    expect(screen.getByText(/Demo mode/)).toBeTruthy()
-    // Sample class is shown so the instructor view is demonstrable.
-    fireEvent.click(screen.getByText(/MS3 internal medicine block \(sample\)/))
+    // The demo banner names the instructor role (not "sample student").
+    expect(screen.getByText(/exploring as a sample instructor/)).toBeTruthy()
+    // Sample class auto-opens; the course row is the button carrying its name.
+    fireEvent.click(screen.getByRole('button', { name: /MS3 internal medicine block/ }))
     expect(await screen.findByText('26')).toBeTruthy() // students joined (sample cohort)
   })
 })

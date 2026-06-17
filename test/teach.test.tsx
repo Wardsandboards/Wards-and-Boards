@@ -15,6 +15,13 @@ const base = () => ({
   onSubmitToCommons: () => Promise.resolve(true),
 })
 
+// The course row is the only <button> carrying the class name (the detail heading
+// is a plain div), so role+name opens it unambiguously even after auto-open.
+const openCourse = () => fireEvent.click(screen.getByRole('button', { name: /MS3 IM block/ }))
+// The cohort-tab callout has unique copy ("…for this class") and also switches to
+// the questions tab, so it disambiguates from the shorter "Write questions" tab.
+const goWrite = async () => fireEvent.click(await screen.findByRole('button', { name: /Write questions for this class/ }))
+
 describe('TeachView', () => {
   it('creates a class with the typed name', () => {
     const onCreate = vi.fn()
@@ -26,7 +33,7 @@ describe('TeachView', () => {
 
   it('opens a course and shows privacy-safe cohort accuracy by system', async () => {
     render(<TeachView {...base()} />)
-    fireEvent.click(screen.getByText('MS3 IM block'))
+    openCourse()
     expect(await screen.findByText('Cardiovascular — 8/10 (80%)')).toBeTruthy()
     expect(screen.getByText('Hematology — 1/4 (25%)')).toBeTruthy()
     expect(screen.getByText('5')).toBeTruthy() // students joined
@@ -40,25 +47,25 @@ describe('TeachView', () => {
   it('rejects an empty question at the Forge gate without calling onCreateQuestion', async () => {
     const onCreateQuestion = vi.fn(() => Promise.resolve(true))
     render(<TeachView {...base()} onCreateQuestion={onCreateQuestion} />)
-    fireEvent.click(screen.getByText('MS3 IM block'))
-    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
-    fireEvent.click(screen.getByRole('button', { name: /Run Forge gate/ }))
-    expect(await screen.findByText(/Fix these before assigning/)).toBeTruthy()
+    openCourse()
+    await goWrite()
+    fireEvent.click(screen.getByRole('button', { name: /Assign to my class/ }))
+    expect(await screen.findByText(/Fix the hard flaws/)).toBeTruthy()
     expect(onCreateQuestion).not.toHaveBeenCalled()
   })
 
   it('authors a board-valid question and assigns it to the class', async () => {
     const onCreateQuestion = vi.fn(() => Promise.resolve(true))
     render(<TeachView {...base()} onCreateQuestion={onCreateQuestion} />)
-    fireEvent.click(screen.getByText('MS3 IM block'))
-    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
+    openCourse()
+    await goWrite()
     fireEvent.change(screen.getByPlaceholderText('e.g. Cardiology'), { target: { value: 'Cardiology' } })
-    fireEvent.change(screen.getByPlaceholderText(/A 68-year-old patient comes to/), { target: { value: 'A 70 year old patient reports chest pressure after climbing stairs.' } })
+    fireEvent.change(screen.getByPlaceholderText(/A 68-year-old patient comes to/), { target: { value: 'A 70 year old patient reports three days of chest pressure that comes on with exertion and resolves with rest.' } })
     fireEvent.change(screen.getByPlaceholderText(/Which of the following is the most likely diagnosis/), { target: { value: 'Which of the following is the most appropriate next step?' } })
     const opts = ['Aspirin', 'Warfarin', 'Clopidogrel', 'Heparin', 'Metoprolol']
     opts.forEach((o, i) => fireEvent.change(screen.getByPlaceholderText('Option ' + String.fromCharCode(65 + i)), { target: { value: o } }))
     fireEvent.change(screen.getByPlaceholderText(/Why the key is right/), { target: { value: 'Aspirin is the right first step here.' } })
-    fireEvent.click(screen.getByRole('button', { name: /Run Forge gate/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Assign to my class/ }))
     await waitFor(() => expect(onCreateQuestion).toHaveBeenCalledWith('c1', expect.objectContaining({ leadIn: 'Which of the following is the most appropriate next step?', system: 'Cardiology' })))
   })
 
@@ -66,8 +73,8 @@ describe('TeachView', () => {
     const q: CourseQuestion = { id: 'q1', courseId: 'c1', level: 'step1', system: 'Cardiology', vignette: 'v', leadIn: 'Which of the following is best?', options: ['a', 'b', 'c', 'd'], answerIndex: 0, explanation: 'e', video: '', commonsStatus: null }
     const onSubmitToCommons = vi.fn(() => Promise.resolve(true))
     render(<TeachView {...base()} onLoadQuestions={() => Promise.resolve([q])} onSubmitToCommons={onSubmitToCommons} />)
-    fireEvent.click(screen.getByText('MS3 IM block'))
-    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
+    openCourse()
+    await goWrite()
     fireEvent.click(await screen.findByRole('button', { name: /Submit to the public commons/ }))
     expect(onSubmitToCommons).toHaveBeenCalledWith(q)
   })
@@ -75,8 +82,8 @@ describe('TeachView', () => {
   it('shows live commons status instead of a submit button once submitted', async () => {
     const q: CourseQuestion = { id: 'q1', courseId: 'c1', level: 'step1', system: 'Cardiology', vignette: 'v', leadIn: 'Which of the following is best?', options: ['a', 'b', 'c', 'd'], answerIndex: 0, explanation: 'e', video: '', commonsStatus: 'in_review' }
     render(<TeachView {...base()} onLoadQuestions={() => Promise.resolve([q])} />)
-    fireEvent.click(screen.getByText('MS3 IM block'))
-    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
+    openCourse()
+    await goWrite()
     expect(await screen.findByText('In peer review')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Submit to the public commons/ })).toBeNull()
   })
@@ -85,7 +92,7 @@ describe('TeachView', () => {
     const q: CourseQuestion = { id: 'q1', courseId: 'c1', level: 'step1', system: 'Cardiology', vignette: 'v', leadIn: 'Which murmur is expected?', options: ['a', 'b', 'c', 'd'], answerIndex: 0, explanation: 'e', video: '', commonsStatus: null }
     const cohortWithAssigned: CohortStats = { size: 5, byKey: { 'course:q1': { attempts: 8, correct: 6 } } }
     render(<TeachView {...base()} onLoadQuestions={() => Promise.resolve([q])} onLoadCohort={() => Promise.resolve(cohortWithAssigned)} />)
-    fireEvent.click(screen.getByText('MS3 IM block'))
+    openCourse()
     expect(await screen.findByText(/How your class did on your questions/)).toBeTruthy()
     expect(screen.getByText('Which murmur is expected? — 6/8 (75%)')).toBeTruthy()
   })

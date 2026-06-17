@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Course, CohortStats, CourseQuestion } from '../lib/courses'
 import { assignedKey } from '../lib/questions'
-import { boardLint } from '../lib/boardLint'
+import { forgeAudit } from '../lib/forge'
+import { ForgeChecklist } from './forge'
 import { blankDraft } from '../constants'
-import type { Draft, LintResult } from '../types'
+import type { Draft } from '../types'
 
 const commonsLabel = (s: string | null): string =>
   s === 'published' ? 'Published to the commons' : s === 'rejected' ? 'Returned by the review board' : s === 'in_review' ? 'In peer review' : ''
@@ -24,22 +25,25 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
   const [questions, setQuestions] = useState<CourseQuestion[]>([])
   const [ctab, setCtab] = useState<'cohort' | 'questions'>('cohort')
   const [draft, setDraft] = useState<Draft>(blankDraft)
-  const [audit, setAudit] = useState<LintResult | null>(null)
+  const [tried, setTried] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const refreshQuestions = (id: string) => onLoadQuestions(id).then(setQuestions)
   const open = (c: Course) => {
-    setSel(c); setCohort(null); setQuestions([]); setCtab('cohort'); setDraft(blankDraft); setAudit(null)
+    setSel(c); setCohort(null); setQuestions([]); setCtab('cohort'); setDraft(blankDraft); setTried(false)
     onLoadCohort(c.id).then(setCohort); refreshQuestions(c.id)
   }
+  // Open the first class automatically so the Cohort / Write-questions tabs are
+  // visible right away (the authoring entry point was hard to find otherwise).
+  useEffect(() => { if (!sel && courses.length) open(courses[0]) }, [courses])
+  const setField = (patch: Partial<Draft>) => { setDraft((d) => ({ ...d, ...patch })); setTried(false) }
   const submitQuestion = async () => {
     if (!sel) return
-    const a = boardLint(draft); setAudit(a)
-    if (!a.ok) return
+    if (!forgeAudit(draft).ok) { setTried(true); return }
     setBusy(true)
     const ok = await onCreateQuestion(sel.id, draft)
     setBusy(false)
-    if (ok) { setDraft(blankDraft); setAudit(null); refreshQuestions(sel.id) }
+    if (ok) { setDraft(blankDraft); setTried(false); refreshQuestions(sel.id); setCtab('questions') }
   }
   const removeQuestion = async (id: string) => { await onDeleteQuestion(id); if (sel) refreshQuestions(sel.id) }
   const submitToCommons = async (q: CourseQuestion) => { const ok = await onSubmitToCommons(q); if (ok && sel) refreshQuestions(sel.id) }
@@ -53,6 +57,8 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
   const totalAnswers = cohort ? Object.values(cohort.byKey).reduce((s, v) => s + v.attempts, 0) : 0
   // Per-question accuracy for the instructor's own assigned questions.
   const assignedStats = cohort ? questions.map((q) => ({ q, s: cohort.byKey[assignedKey(q.id)] })).filter((x) => x.s && x.s.attempts > 0) : []
+  const draftStarted = !!(draft.vignette || draft.leadIn || draft.system || draft.options.some(Boolean) || draft.explanation)
+  const draftOk = forgeAudit(draft).ok
 
   return (
     <section className="section" style={{ paddingTop: 34 }}><div className="wrap" style={{ maxWidth: 760 }}>
@@ -82,9 +88,10 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
 
           <div className="cat-tabs" style={{ marginTop: 12 }}>
             <button className={'cat-tab ' + (ctab === 'cohort' ? 'active' : '')} onClick={() => setCtab('cohort')}>Cohort progress</button>
-            <button className={'cat-tab ' + (ctab === 'questions' ? 'active' : '')} onClick={() => setCtab('questions')}>Your questions<span className="cat-count">{questions.length}</span></button>
+            <button className={'cat-tab ' + (ctab === 'questions' ? 'active' : '')} onClick={() => setCtab('questions')}>Write questions<span className="cat-count">{questions.length}</span></button>
           </div>
 
+          {ctab === 'cohort' && <button className="ghost-btn" style={{ margin: '12px 0 4px' }} onClick={() => setCtab('questions')}>✏️ Write questions for this class →</button>}
           {ctab === 'cohort' && (!cohort ? <p style={{ color: 'var(--dim)' }}>Loading…</p> : (<>
             <div className="how-grid" style={{ margin: '12px 0' }}>
               <div className="how-card"><div style={{ fontSize: '0.8rem', color: 'var(--mid)' }}>Students joined</div><div className="stat-num">{cohort.size}</div></div>
@@ -116,33 +123,31 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
             ))}</div>}
 
             <div className="qblock" style={{ marginTop: 12 }}>
-              <div className="prompt-q" style={{ marginBottom: 10 }}>Write a question for your class</div>
+              <div className="prompt-q" style={{ marginBottom: 4 }}>Write a question for your class</div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--mid)', margin: '0 0 12px' }}>As you fill this in, the Item Forge checks it against board exam item-writing rules and shows a ✓ or ✕ for each, so you can see what to work on. The hard checks (✕) must pass before you can assign it.</p>
               <div className="os-grid" style={{ marginBottom: 12 }}>
                 <div><div className="prompt-q" style={{ marginBottom: 6 }}>Exam level</div>
-                  <select className="os-input" value={draft.level} onChange={(e) => setDraft({ ...draft, level: e.target.value })}><option value="step1">Step 1 (mechanism)</option><option value="shelf">Shelf / Step 2 (clinical)</option></select></div>
+                  <select className="os-input" value={draft.level} onChange={(e) => setField({ level: e.target.value })}><option value="step1">Step 1 (mechanism)</option><option value="shelf">Shelf / Step 2 (clinical)</option></select></div>
                 <div><div className="prompt-q" style={{ marginBottom: 6 }}>System / topic</div>
-                  <input className="os-input" value={draft.system} onChange={(e) => setDraft({ ...draft, system: e.target.value })} placeholder="e.g. Cardiology" /></div>
+                  <input className="os-input" value={draft.system} onChange={(e) => setField({ system: e.target.value })} placeholder="e.g. Cardiology" /></div>
               </div>
               <div className="prompt-q" style={{ marginBottom: 6 }}>Clinical vignette</div>
-              <textarea className="answer-textarea" value={draft.vignette} onChange={(e) => setDraft({ ...draft, vignette: e.target.value })} placeholder="A 68-year-old patient comes to..." />
+              <textarea className="answer-textarea" value={draft.vignette} onChange={(e) => setField({ vignette: e.target.value })} placeholder="A 68-year-old patient comes to..." />
               <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Lead-in</div>
-              <input className="os-input" value={draft.leadIn} onChange={(e) => setDraft({ ...draft, leadIn: e.target.value })} placeholder="Which of the following is the most likely diagnosis?" />
+              <input className="os-input" value={draft.leadIn} onChange={(e) => setField({ leadIn: e.target.value })} placeholder="Which of the following is the most likely diagnosis?" />
               <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Options (select the correct one)</div>
               {draft.options.map((o, i) => (
                 <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
-                  <input type="radio" checked={draft.answerIndex === i} onChange={() => setDraft({ ...draft, answerIndex: i })} />
-                  <input className="os-input" value={o} onChange={(e) => { const op = [...draft.options]; op[i] = e.target.value; setDraft({ ...draft, options: op }) }} placeholder={'Option ' + String.fromCharCode(65 + i)} /></div>
+                  <input type="radio" checked={draft.answerIndex === i} onChange={() => setField({ answerIndex: i })} />
+                  <input className="os-input" value={o} onChange={(e) => { const op = [...draft.options]; op[i] = e.target.value; setField({ options: op }) }} placeholder={'Option ' + String.fromCharCode(65 + i)} /></div>
               ))}
               <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Explanation</div>
-              <textarea className="answer-textarea" value={draft.explanation} onChange={(e) => setDraft({ ...draft, explanation: e.target.value })} placeholder="Why the key is right and each distractor is wrong." />
+              <textarea className="answer-textarea" value={draft.explanation} onChange={(e) => setField({ explanation: e.target.value })} placeholder="Why the key is right and each distractor is wrong." />
               <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Video explanation (optional)</div>
-              <input className="os-input" value={draft.video} onChange={(e) => setDraft({ ...draft, video: e.target.value })} placeholder="Paste a YouTube link to embed a short explainer with this question" />
-              <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} disabled={busy} onClick={submitQuestion}>{busy ? 'Saving…' : 'Run Forge gate & assign to my class'}</button></div>
-              {audit && (
-                <div className="feedback" style={{ borderLeftColor: audit.ok ? 'var(--good)' : 'var(--bad)' }}>
-                  <div className="fb-result" style={{ color: audit.ok ? 'var(--good)' : 'var(--bad)' }}>{audit.ok ? '✓ Passed the Forge gate, assigned to your class' : '✗ Fix these before assigning:'}</div>
-                  {audit.fails.map((f, i) => <div key={i} style={{ color: 'var(--warn)', fontSize: '0.85rem' }}>• {f}</div>)}</div>
-              )}
+              <input className="os-input" value={draft.video} onChange={(e) => setField({ video: e.target.value })} placeholder="Paste a YouTube link to embed a short explainer with this question" />
+              {draftStarted && <ForgeChecklist item={draft} />}
+              <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} disabled={busy} onClick={submitQuestion}>{busy ? 'Saving…' : 'Assign to my class'}</button></div>
+              {tried && !draftOk && <div className="feedback" style={{ borderLeftColor: 'var(--bad)' }}><div className="fb-result" style={{ color: 'var(--bad)' }}>Fix the hard flaws marked ✕ above before assigning.</div></div>}
             </div>
           </>)}
         </div>

@@ -7,6 +7,8 @@ import { COMMUNITY_AUTHORS } from './data/authors'
 import { buildRoute, parseRoute } from './lib/router'
 import { ADMIN_EMAILS, CATEGORY_ORDER, blankDraft, categoryOf } from './constants'
 import { boardLint } from './lib/boardLint'
+import { forgeAudit } from './lib/forge'
+import { ForgeChecklist } from './components/forge'
 import { assignedKey, assignedToPracticeItem, authorStub, boardBankFromJson, communityAttribution } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
@@ -29,7 +31,7 @@ import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
 import { googleEnabled, onGoogleSession, signInWithGoogle, signOutGoogle } from './auth/googleAuth'
-import type { AuthState, Author, ContribState, Draft, LintResult, PendingApp, PracticeItem, PracticeStore } from './types'
+import type { AuthState, Author, ContribState, Draft, PendingApp, PracticeItem, PracticeStore } from './types'
 
 type ProgressMap = Record<string, Record<string, boolean>>
 
@@ -69,9 +71,10 @@ export default function App() {
   // Profile settings on the localStorage mock are keyed by email; with a backend
   // they live on the user's `profile` row instead.
   const [settings, setSettings] = useState<Record<string, { display_name: string; bio: string; course_code: string }>>(() => loadLS('os_settings', {}))
-  // Demo mode: explore as a sample student without signing in. It runs entirely on
-  // the local mock (no real backend writes), so nothing is saved to a real account.
+  // Demo mode: explore as a sample student OR sample instructor without signing in.
+  // It runs entirely on the local mock (no real backend writes), so nothing is saved.
   const [demoMode, setDemoMode] = useState(false)
+  const [demoKind, setDemoKind] = useState<'student' | 'instructor'>('student')
   // Distinct days the user answered a question, for the study streak. Updated
   // locally on every answer; merged with real attempt dates from the DB on load.
   const [days, setDays] = useState<string[]>(() => loadLS('os_days', []))
@@ -95,7 +98,7 @@ export default function App() {
   const [contrib, setContrib] = useState<ContribState>(() => loadLS('os_contrib', { qs: [], counter: 100 }))
   const [csub, setCsub] = useState('author')
   const [draft, setDraft] = useState<Draft>(blankDraft)
-  const [audit, setAudit] = useState<LintResult | null>(null)
+  const [cTried, setCTried] = useState(false)
 
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); saveLS('os_theme', theme) }, [theme])
   useEffect(() => { if ('scrollRestoration' in history) history.scrollRestoration = 'manual' }, [])
@@ -145,8 +148,8 @@ export default function App() {
   const signIn = (email: string, name: string) => setAuth((a) => { const u = { ...a.users }; if (!u[email]) u[email] = { name: name || email, email, role: 'learner', app: { status: 'none' } }; return { ...a, users: u, currentEmail: email } })
   const signOut = () => { if (googleEnabled) signOutGoogle(); setProfile(null); setDbPending([]); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
   // Enter a sample-student demo (local only), and leave it cleanly.
-  const startDemo = () => { setProfile(null); setDemoMode(true); signIn('demo.student@wardsandboards.com', 'Demo Student'); setActiveId(null); setMode('learn') }
-  const startDemoInstructor = () => { setProfile(null); setDemoMode(true); signIn('demo.instructor@wardsandboards.com', 'Demo Instructor'); setActiveId(null); setMode('faculty') }
+  const startDemo = () => { setProfile(null); setDemoMode(true); setDemoKind('student'); signIn('demo.student@wardsandboards.com', 'Demo Student'); setActiveId(null); setMode('learn') }
+  const startDemoInstructor = () => { setProfile(null); setDemoMode(true); setDemoKind('instructor'); signIn('demo.instructor@wardsandboards.com', 'Demo Instructor'); setActiveId(null); setMode('faculty') }
   const exitDemo = () => { setDemoMode(false); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
   const applyContributor = (form: { training: string; institution: string; npi: string }) => {
     if (dbOn) { applyForContributor(form).then((p) => { if (p) setProfile(p) }); return }
@@ -348,12 +351,10 @@ export default function App() {
   const saveWardPrompt = (caseId: string, promptId: string, value: string) => { if (dbOn) saveWardAnswer(caseId, promptId, value) }
   const submitDraft = () => {
     if (!me) return
-    const a = boardLint(draft)
-    setAudit(a)
-    if (!a.ok) return
+    if (!forgeAudit(draft).ok) { setCTried(true); return }
     if (dbOn) submitContribution(draft).then(refreshContrib)
     else setContrib((s) => enqueueDraft(s, draft, me.email))
-    setDraft(blankDraft); setAudit(null); setCsub('review')
+    setDraft(blankDraft); setCTried(false); setCsub('review')
   }
   const reviewItem = (qid: string, decision: string) => {
     if (!me) return
@@ -447,12 +448,12 @@ export default function App() {
             <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Explanation</div>
             <textarea className="answer-textarea" value={draft.explanation} onChange={(e) => setDraft({ ...draft, explanation: e.target.value })} placeholder="Why the key is right and each distractor is wrong." />
             <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Video explanation (optional)</div>
-            <input className="os-input" value={draft.video} onChange={(e) => setDraft({ ...draft, video: e.target.value })} placeholder="Paste a YouTube link to embed a short explainer with this question" />
-            <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} onClick={submitDraft}>Run Forge gate &amp; submit for peer review</button></div>
-            {audit && (
-              <div className="feedback" style={{ borderLeftColor: audit.ok ? 'var(--good)' : 'var(--bad)' }}>
-                <div className="fb-result" style={{ color: audit.ok ? 'var(--good)' : 'var(--bad)' }}>{audit.ok ? '✓ Passed the Forge gate, sent to peer review' : '✗ Fix these before submitting:'}</div>
-                {audit.fails.map((f, i) => <div key={i} style={{ color: 'var(--warn)', fontSize: '0.85rem' }}>• {f}</div>)}</div>
+            <input className="os-input" value={draft.video} onChange={(e) => { setDraft({ ...draft, video: e.target.value }); setCTried(false) }} placeholder="Paste a YouTube link to embed a short explainer with this question" />
+            {(draft.vignette || draft.leadIn || draft.system || draft.options.some(Boolean) || draft.explanation) && <ForgeChecklist item={draft} />}
+            <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} onClick={submitDraft}>Submit for peer review</button></div>
+            {cTried && !forgeAudit(draft).ok && (
+              <div className="feedback" style={{ borderLeftColor: 'var(--bad)' }}>
+                <div className="fb-result" style={{ color: 'var(--bad)' }}>Fix the hard flaws marked ✕ above before submitting.</div></div>
             )}
           </div>
         )}
@@ -536,7 +537,7 @@ export default function App() {
 
       {demoMode && (
         <div className="demo-banner">
-          <span><b>Demo mode</b> · you are exploring as a sample student. Nothing you do is saved.</span>
+          <span><b>Demo mode</b> · you are exploring as a sample {demoKind === 'instructor' ? 'instructor' : 'student'}. Nothing you do is saved.</span>
           <button className="demo-exit" onClick={exitDemo}>Exit demo</button>
         </div>
       )}
