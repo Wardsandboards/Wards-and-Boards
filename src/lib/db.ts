@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { dateKey } from './gamify'
 
 // Per-user study data backed by Supabase. When Supabase isn't configured or no
 // one is signed in, every function is a safe no-op and the app keeps running on
@@ -21,6 +22,7 @@ export interface StudyData {
   att: Record<string, { correct: boolean }[]>
   rate: Record<string, number>
   progress: Record<string, Record<string, boolean>>
+  dates: string[] // distinct YYYY-MM-DD days the user answered (for streaks)
 }
 
 /** Load all of the signed-in user's attempts, ratings, and progress. */
@@ -30,13 +32,15 @@ export async function loadStudyData(): Promise<StudyData | null> {
   if (!uid) return null
   try {
     const [a, r, p] = await Promise.all([
-      supabase.from('attempts').select('question_key, correct').eq('user_id', uid).order('created_at', { ascending: true }),
+      supabase.from('attempts').select('question_key, correct, created_at').eq('user_id', uid).order('created_at', { ascending: true }),
       supabase.from('ratings').select('question_key, stars').eq('user_id', uid),
       supabase.from('progress').select('case_id, mode, completed').eq('user_id', uid),
     ])
     const att: StudyData['att'] = {}
-    ;((a.data ?? []) as { question_key: string; correct: boolean }[]).forEach((row) => {
+    const dateSet = new Set<string>()
+    ;((a.data ?? []) as { question_key: string; correct: boolean; created_at: string }[]).forEach((row) => {
       ;(att[row.question_key] ||= []).push({ correct: row.correct })
+      if (row.created_at) dateSet.add(dateKey(new Date(row.created_at)))
     })
     const rate: StudyData['rate'] = {}
     ;((r.data ?? []) as { question_key: string; stars: number }[]).forEach((row) => {
@@ -46,7 +50,7 @@ export async function loadStudyData(): Promise<StudyData | null> {
     ;((p.data ?? []) as { case_id: string; mode: string; completed: boolean }[]).forEach((row) => {
       ;(progress[row.case_id] ||= {})[row.mode] = !!row.completed
     })
-    return { att, rate, progress }
+    return { att, rate, progress, dates: Array.from(dateSet) }
   } catch {
     return null
   }

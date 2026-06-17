@@ -16,6 +16,9 @@ import type { CommunityQuestion, DbAuthor, DbContribution, DbFlag, DbProfile } f
 import { WMLogo } from './components/common'
 import { CaseView, LearnLibrary, WardMomentIntro } from './components/learn'
 import { PracticeCard } from './components/practice'
+import { ProgressDashboard } from './components/progress'
+import { streakFromDays, todayKey } from './lib/gamify'
+import type { GameStats } from './lib/gamify'
 import { AuthorsView } from './components/authors'
 import { AdminQueue, ContributorApplication, FlagQueue, SignIn } from './components/auth'
 import { SettingsView } from './components/settings'
@@ -49,6 +52,9 @@ export default function App() {
   // Demo mode: explore as a sample student without signing in. It runs entirely on
   // the local mock (no real backend writes), so nothing is saved to a real account.
   const [demoMode, setDemoMode] = useState(false)
+  // Distinct days the user answered a question, for the study streak. Updated
+  // locally on every answer; merged with real attempt dates from the DB on load.
+  const [days, setDays] = useState<string[]>(() => loadLS('os_days', []))
   // Initial view comes from the URL so cases/tabs are deep-linkable and survive refresh.
   const initialRoute = parseRoute(window.location.pathname)
   const [mode, setMode] = useState(initialRoute.mode)
@@ -204,6 +210,7 @@ export default function App() {
       if (cancelled || !d) return
       setPst({ att: d.att, rate: d.rate })
       setProgressRaw(d.progress)
+      if (d.dates.length) setDays((prev) => { const nd = Array.from(new Set([...prev, ...d.dates])); saveLS('os_days', nd); return nd })
     })
     loadWardAnswers().then((w) => {
       if (cancelled || !Object.keys(w).length) return
@@ -240,7 +247,8 @@ export default function App() {
   const due = QS.filter((q) => { const l = lastAtt(q.id); return l && !l.correct })
   const bankCats = (() => { const pr: string[] = []; CATEGORY_ORDER.forEach((k) => { if (QS.some((q) => categoryOf(q.system) === k)) pr.push(k) }); QS.forEach((q) => { const k = categoryOf(q.system); if (!pr.includes(k)) pr.push(k) }); return ['All', ...pr] })()
   const bankList = pcat === 'All' ? QS : QS.filter((q) => categoryOf(q.system) === pcat)
-  const pick = (qid: string, i: number, correct: boolean) => { setPicks((s) => ({ ...s, [qid]: i })); if (me) { setPst((s) => { const att = { ...s.att }; att[qid] = [...(att[qid] || []), { correct }]; return { ...s, att } }); recordAttempt(qid, correct) } }
+  const markStudyDay = () => setDays((d) => { const t = todayKey(); if (d.includes(t)) return d; const nd = [...d, t]; saveLS('os_days', nd); return nd })
+  const pick = (qid: string, i: number, correct: boolean) => { setPicks((s) => ({ ...s, [qid]: i })); if (me) { setPst((s) => { const att = { ...s.att }; att[qid] = [...(att[qid] || []), { correct }]; return { ...s, att } }); recordAttempt(qid, correct); markStudyDay() } }
   const rate = (qid: string, n: number) => { setPst((s) => ({ ...s, rate: { ...s.rate, [qid]: n } })); saveRating(qid, n) }
   // Learn-quiz answers are now recorded as attempts too (they used to record only
   // case completion), so a learner's answered-question history is complete.
@@ -248,6 +256,7 @@ export default function App() {
     if (!me) return
     setPst((s) => { const att = { ...s.att }; att[questionKey] = [...(att[questionKey] || []), { correct }]; return { ...s, att } })
     recordAttempt(questionKey, correct)
+    markStudyDay()
   }
   const saveWardPrompt = (caseId: string, promptId: string, value: string) => { if (dbOn) saveWardAnswer(caseId, promptId, value) }
   const submitDraft = () => {
@@ -303,26 +312,26 @@ export default function App() {
         </>
       )}
       {psub === 'prog' && (() => {
-        const atts: { correct: boolean; system: string }[] = []
-        QS.forEach((q) => (pst.att[q.id] || []).forEach((a) => atts.push({ ...a, system: q.system })))
+        // Map every answer key (Practice ids + qkeys, and Learn case:question keys) to a system.
+        const keySystem: Record<string, string> = {}
+        QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
+        cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
+        let answers = 0, correct = 0
         const seen = new Set<string>()
-        QS.forEach((q) => { if ((pst.att[q.id] || []).length) seen.add(q.id) })
-        const total = atts.length, correct = atts.filter((a) => a.correct).length, acc = total ? Math.round((100 * correct) / total) : 0
         const bySys: Record<string, { c: number; t: number }> = {}
-        atts.forEach((a) => { (bySys[a.system] = bySys[a.system] || { c: 0, t: 0 }).t++; if (a.correct) bySys[a.system].c++ })
-        return (
-          <div>
-            <div className="how-grid" style={{ marginBottom: 18 }}>
-              <div className="how-card"><div style={{ fontSize: '0.8rem', color: 'var(--mid)' }}>Questions seen</div><div className="stat-num">{seen.size}</div></div>
-              <div className="how-card"><div style={{ fontSize: '0.8rem', color: 'var(--mid)' }}>Total answers</div><div className="stat-num">{total}</div></div>
-              <div className="how-card"><div style={{ fontSize: '0.8rem', color: 'var(--mid)' }}>Accuracy</div><div className={'stat-num ' + (acc >= 70 ? 'good' : 'warn')}>{acc}%</div></div>
-              <div className="how-card"><div style={{ fontSize: '0.8rem', color: 'var(--mid)' }}>Due for review</div><div className={'stat-num ' + (due.length ? 'warn' : 'good')}>{due.length}</div></div>
-            </div>
-            <div className="qblock"><div className="reveal-title">Accuracy by system</div>
-              {Object.keys(bySys).length === 0 ? <p style={{ color: 'var(--dim)', marginTop: 8 }}>Answer some questions to see your breakdown.</p> :
-                Object.entries(bySys).map(([s, v]) => { const pc = Math.round((100 * v.c) / v.t); return (<div key={s} style={{ margin: '10px 0' }}><div style={{ fontSize: '0.85rem', color: 'var(--mid)', marginBottom: 5 }}>{s} — {v.c}/{v.t} ({pc}%)</div><div className="os-bar"><div style={{ width: pc + '%' }} /></div></div>) })}</div>
-          </div>
-        )
+        Object.keys(pst.att).forEach((k) => {
+          const arr = pst.att[k]; if (!arr.length) return
+          seen.add(k)
+          const sys = keySystem[k] || 'Other'
+          arr.forEach((a) => { answers++; if (a.correct) correct++; (bySys[sys] = bySys[sys] || { c: 0, t: 0 }).t++; if (a.correct) bySys[sys].c++ })
+        })
+        const gstats: GameStats = {
+          answers, correct, seen: seen.size,
+          casesDone: Object.values(progress).filter((m) => Object.values(m).some(Boolean)).length,
+          streak: streakFromDays(days),
+          systems: Object.entries(bySys).map(([system, v]) => ({ system, correct: v.c, total: v.t })),
+        }
+        return <ProgressDashboard stats={gstats} due={due.length} />
       })()}
     </div></section>
   )

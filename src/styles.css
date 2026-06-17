@@ -426,3 +426,17 @@ button.qb-link:hover .qb-name { color:var(--accent); }
 .anki-copy:hover { filter:brightness(1.06); }
 .anki-x { background:none; border:0; color:var(--dim); cursor:pointer; font-size:0.82rem; font-weight:700; }
 .anki-x:hover { color:var(--mid); }
+
+/* Gamified progress: level hero, XP bar, streak, locked badges */
+.game-hero { display:flex; gap:16px; flex-wrap:wrap; align-items:stretch; margin-bottom:18px; }
+.game-level { flex:1; min-width:240px; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+.game-lvl-kicker { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--dim); font-weight:800; }
+.game-lvl-name { font-size:1.45rem; font-weight:800; color:var(--ink); margin:2px 0 10px; }
+.game-bar { height:10px; border-radius:999px; background:color-mix(in srgb,var(--accent) 16%,transparent); overflow:hidden; }
+.game-bar > div { height:100%; background:var(--accent); border-radius:999px; transition:width .4s ease; }
+.game-xp { font-size:0.82rem; color:var(--mid); margin-top:8px; font-weight:600; }
+.game-streak { width:130px; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; text-align:center; display:flex; flex-direction:column; justify-content:center; }
+.game-streak-flame { font-size:1.7rem; line-height:1; }
+.game-streak-n { font-size:1.9rem; font-weight:800; color:var(--ink); }
+.game-streak-l { font-size:0.74rem; color:var(--mid); font-weight:700; }
+.badge-locked { opacity:0.4; filter:grayscale(1); }
