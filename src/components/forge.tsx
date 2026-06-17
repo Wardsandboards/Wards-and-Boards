@@ -31,7 +31,7 @@ export function ForgeChecklist({ item }: { item: ForgeInput }) {
   const complete = res.rules.filter((r) => r.section === 'complete')
   const flaws = res.rules.filter((r) => r.section === 'flaws')
   return (
-    <div className="forge-audit" style={{ marginTop: 14 }}>
+    <div className="forge-audit">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
         <span className={'os-badge ' + (res.ok ? 'ready' : 'polish')}>{res.ok ? '✓ Passes the board exam gate' : '✕ ' + hard + ' to finish or fix'}</span>
         {res.ok && res.softWarns.length > 0 && <span style={{ fontSize: '0.78rem', color: 'var(--warn)' }}>{res.softWarns.length} optional polish {res.softWarns.length === 1 ? 'note' : 'notes'}</span>}

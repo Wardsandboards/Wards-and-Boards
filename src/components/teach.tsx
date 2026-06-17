@@ -57,7 +57,6 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
   const totalAnswers = cohort ? Object.values(cohort.byKey).reduce((s, v) => s + v.attempts, 0) : 0
   // Per-question accuracy for the instructor's own assigned questions.
   const assignedStats = cohort ? questions.map((q) => ({ q, s: cohort.byKey[assignedKey(q.id)] })).filter((x) => x.s && x.s.attempts > 0) : []
-  const draftStarted = !!(draft.vignette || draft.leadIn || draft.system || draft.options.some(Boolean) || draft.explanation)
   const draftOk = forgeAudit(draft).ok
 
   return (
@@ -124,30 +123,36 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
 
             <div className="qblock" style={{ marginTop: 12 }}>
               <div className="prompt-q" style={{ marginBottom: 4 }}>Write a question for your class</div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--mid)', margin: '0 0 12px' }}>As you fill this in, the Item Forge checks it against board exam item-writing rules and shows a ✓ or ✕ for each, so you can see what to work on. The hard checks (✕) must pass before you can assign it.</p>
-              <div className="os-grid" style={{ marginBottom: 12 }}>
-                <div><div className="prompt-q" style={{ marginBottom: 6 }}>Exam level</div>
-                  <select className="os-input" value={draft.level} onChange={(e) => setField({ level: e.target.value })}><option value="step1">Step 1 (mechanism)</option><option value="shelf">Shelf / Step 2 (clinical)</option></select></div>
-                <div><div className="prompt-q" style={{ marginBottom: 6 }}>System / topic</div>
-                  <input className="os-input" value={draft.system} onChange={(e) => setField({ system: e.target.value })} placeholder="e.g. Cardiology" /></div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--mid)', margin: '0 0 12px' }}>As you fill this in, the Item Forge checklist beside it checks the question against board exam item-writing rules and shows a ✓, ✕, or — for each, so you can see what to work on. The hard checks (✕) must pass before you can assign it.</p>
+              <div style={{ display: 'flex', gap: 22, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 360px', minWidth: 280 }}>
+                  <div className="os-grid" style={{ marginBottom: 12 }}>
+                    <div><div className="prompt-q" style={{ marginBottom: 6 }}>Exam level</div>
+                      <select className="os-input" value={draft.level} onChange={(e) => setField({ level: e.target.value })}><option value="step1">Step 1 (mechanism)</option><option value="shelf">Shelf / Step 2 (clinical)</option></select></div>
+                    <div><div className="prompt-q" style={{ marginBottom: 6 }}>System / topic</div>
+                      <input className="os-input" value={draft.system} onChange={(e) => setField({ system: e.target.value })} placeholder="e.g. Cardiology" /></div>
+                  </div>
+                  <div className="prompt-q" style={{ marginBottom: 6 }}>Clinical vignette</div>
+                  <textarea className="answer-textarea" value={draft.vignette} onChange={(e) => setField({ vignette: e.target.value })} placeholder="A 68-year-old patient comes to..." />
+                  <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Lead-in</div>
+                  <input className="os-input" value={draft.leadIn} onChange={(e) => setField({ leadIn: e.target.value })} placeholder="Which of the following is the most likely diagnosis?" />
+                  <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Options (select the correct one)</div>
+                  {draft.options.map((o, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
+                      <input type="radio" checked={draft.answerIndex === i} onChange={() => setField({ answerIndex: i })} />
+                      <input className="os-input" value={o} onChange={(e) => { const op = [...draft.options]; op[i] = e.target.value; setField({ options: op }) }} placeholder={'Option ' + String.fromCharCode(65 + i)} /></div>
+                  ))}
+                  <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Explanation</div>
+                  <textarea className="answer-textarea" value={draft.explanation} onChange={(e) => setField({ explanation: e.target.value })} placeholder="Why the key is right and each distractor is wrong." />
+                  <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Video explanation (optional)</div>
+                  <input className="os-input" value={draft.video} onChange={(e) => setField({ video: e.target.value })} placeholder="Paste a YouTube link to embed a short explainer with this question" />
+                  <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} disabled={busy} onClick={submitQuestion}>{busy ? 'Saving…' : 'Assign to my class'}</button></div>
+                  {tried && !draftOk && <div className="feedback" style={{ borderLeftColor: 'var(--bad)' }}><div className="fb-result" style={{ color: 'var(--bad)' }}>Fix the hard flaws marked ✕ in the checklist before assigning.</div></div>}
+                </div>
+                <div style={{ flex: '1 1 280px', minWidth: 250, position: 'sticky', top: 12, alignSelf: 'flex-start' }}>
+                  <ForgeChecklist item={draft} />
+                </div>
               </div>
-              <div className="prompt-q" style={{ marginBottom: 6 }}>Clinical vignette</div>
-              <textarea className="answer-textarea" value={draft.vignette} onChange={(e) => setField({ vignette: e.target.value })} placeholder="A 68-year-old patient comes to..." />
-              <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Lead-in</div>
-              <input className="os-input" value={draft.leadIn} onChange={(e) => setField({ leadIn: e.target.value })} placeholder="Which of the following is the most likely diagnosis?" />
-              <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Options (select the correct one)</div>
-              {draft.options.map((o, i) => (
-                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
-                  <input type="radio" checked={draft.answerIndex === i} onChange={() => setField({ answerIndex: i })} />
-                  <input className="os-input" value={o} onChange={(e) => { const op = [...draft.options]; op[i] = e.target.value; setField({ options: op }) }} placeholder={'Option ' + String.fromCharCode(65 + i)} /></div>
-              ))}
-              <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Explanation</div>
-              <textarea className="answer-textarea" value={draft.explanation} onChange={(e) => setField({ explanation: e.target.value })} placeholder="Why the key is right and each distractor is wrong." />
-              <div className="prompt-q" style={{ margin: '12px 0 6px' }}>Video explanation (optional)</div>
-              <input className="os-input" value={draft.video} onChange={(e) => setField({ video: e.target.value })} placeholder="Paste a YouTube link to embed a short explainer with this question" />
-              {draftStarted && <ForgeChecklist item={draft} />}
-              <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} disabled={busy} onClick={submitQuestion}>{busy ? 'Saving…' : 'Assign to my class'}</button></div>
-              {tried && !draftOk && <div className="feedback" style={{ borderLeftColor: 'var(--bad)' }}><div className="fb-result" style={{ color: 'var(--bad)' }}>Fix the hard flaws marked ✕ above before assigning.</div></div>}
             </div>
           </>)}
         </div>
