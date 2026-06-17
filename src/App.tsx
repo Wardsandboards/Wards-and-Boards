@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import './styles.css'
 import { CASES } from './data/cases'
@@ -7,7 +7,7 @@ import { COMMUNITY_AUTHORS } from './data/authors'
 import { buildRoute, parseRoute } from './lib/router'
 import { ADMIN_EMAILS, CATEGORY_ORDER, blankDraft, categoryOf } from './constants'
 import { boardLint } from './lib/boardLint'
-import { authorStub, boardBankFromJson, communityAttribution } from './lib/questions'
+import { assignedKey, assignedToPracticeItem, authorStub, boardBankFromJson, communityAttribution } from './lib/questions'
 import { applyReview, enqueueDraft } from './lib/contribute'
 import { loadLS, saveLS } from './lib/storage'
 import { dbEnabled, loadStudyData, loadWardAnswers, recordAttempt, saveCaseProgress, saveRating, saveWardAnswer } from './lib/db'
@@ -23,8 +23,8 @@ import { AuthorsView } from './components/authors'
 import { AdminQueue, ContributorApplication, FlagQueue, SignIn } from './components/auth'
 import { SettingsView } from './components/settings'
 import { TeachView } from './components/teach'
-import { createCourse, loadCohort, loadMyCourses } from './lib/courses'
-import type { Course, CohortStats } from './lib/courses'
+import { createCourse, createCourseQuestion, deleteCourseQuestion, loadAssignedQuestions, loadCohort, loadCourseQuestions, loadMyCourses, submitCourseQuestionToCommons } from './lib/courses'
+import type { Course, CohortStats, CourseQuestion } from './lib/courses'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
@@ -49,6 +49,20 @@ export default function App() {
   const [dbCourses, setDbCourses] = useState<Course[]>([])
   // Sample class shown in demo / no-backend mode so the Faculty view is populated.
   const [demoCourses, setDemoCourses] = useState<Course[]>([{ id: 'demo-course-1', name: 'MS3 internal medicine block (sample)', code: 'WBDEMO', created_at: '' }])
+  // Faculty-authored questions live in the DB per course on the backend; on the
+  // demo/mock a ref-backed sample store lets the sample instructor try the full
+  // authoring loop (a ref so reloads read the latest list synchronously).
+  const demoCourseQuestions = useRef<CourseQuestion[]>([
+    { id: 'demo-cq-1', courseId: 'demo-course-1', level: 'step1', system: 'Cardiology',
+      vignette: 'A 64-year-old patient with longstanding hypertension is admitted with worsening exertional dyspnea and bilateral leg swelling. Echocardiography shows a left ventricular ejection fraction of 30 percent.',
+      leadIn: 'Which change best explains the rise in this patient’s pulmonary capillary wedge pressure?',
+      options: ['Increased left ventricular end-diastolic pressure', 'Decreased systemic vascular resistance', 'Decreased circulating blood volume', 'Increased right atrial compliance', 'Decreased pulmonary vascular resistance'],
+      answerIndex: 0,
+      explanation: 'A failing left ventricle empties less completely, so end-diastolic pressure rises and is transmitted backward to the left atrium and the pulmonary capillaries, raising the wedge pressure.',
+      video: '', commonsStatus: null },
+  ])
+  // Questions the signed-in student's instructor assigned (their enrolled course).
+  const [assigned, setAssigned] = useState<CourseQuestion[]>([])
   // Question flags: DB-backed when configured; localStorage on the mock.
   const [dbFlags, setDbFlags] = useState<DbFlag[]>([])
   const [mockFlags, setMockFlags] = useState<DbFlag[]>(() => loadLS('os_flags', []))
@@ -210,6 +224,9 @@ export default function App() {
   // backend is on. The workspace items follow the signed-in contributor.
   useEffect(() => { refreshCommunity(); refreshAuthors() }, [])
   useEffect(() => { if (me && dbEnabled()) { refreshContrib(); refreshCourses() } }, [me?.email])
+  // Load the questions this student's instructor assigned (real backend only; the
+  // demo student is not enrolled in a course).
+  useEffect(() => { if (me && dbEnabled() && !demoMode) loadAssignedQuestions().then(setAssigned); else setAssigned([]) }, [me?.email, demoMode])
 
   // Once signed in with a real backend, load this user's study data from Supabase
   // so progress, ratings, and attempts follow them across devices.
@@ -267,6 +284,7 @@ export default function App() {
   const keySystem: Record<string, string> = {}
   QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
   cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
+  assigned.forEach((q) => { keySystem[assignedKey(q.id)] = q.system })
   // Faculty view data: real courses on the backend, a populated sample otherwise
   // (demo / local) so the instructor view is demonstrable without real students.
   const teachCourses = dbOn ? dbCourses : demoCourses
@@ -274,10 +292,29 @@ export default function App() {
     const byKey: CohortStats['byKey'] = {}
     const accs = [0.84, 0.61, 0.73, 0.57, 0.9, 0.68, 0.5]
     QS.slice(0, 14).forEach((q, i) => { const t = 17 + (i % 9); byKey[q.qkey] = { attempts: t, correct: Math.round(t * accs[i % accs.length]) } })
+    byKey[assignedKey('demo-cq-1')] = { attempts: 22, correct: 13 } // the sample instructor's own question
     return { size: 26, byKey }
   })()
   const onCreateCourseUnified = (name: string) => { if (dbOn) { onCreateCourse(name); return } setDemoCourses((cs) => [...cs, { id: 'demo-course-' + (cs.length + 1), name, code: 'WB' + String(1000 + cs.length), created_at: '' }]) }
   const loadCohortUnified = (id: string): Promise<CohortStats> => (dbOn ? loadCohort(id) : Promise.resolve(demoCohort))
+  // Faculty authoring: real per-course questions on the backend; the ref-backed
+  // sample store on the demo/mock so the sample instructor can try the full loop.
+  const loadCourseQuestionsUnified = (id: string): Promise<CourseQuestion[]> => (dbOn ? loadCourseQuestions(id) : Promise.resolve(demoCourseQuestions.current.filter((q) => q.courseId === id)))
+  const createCourseQuestionUnified = async (id: string, d: Draft): Promise<boolean> => {
+    if (dbOn) return createCourseQuestion(id, d)
+    demoCourseQuestions.current = [...demoCourseQuestions.current, { id: 'demo-cq-' + (demoCourseQuestions.current.length + 1), courseId: id, level: d.level, system: d.system, vignette: d.vignette, leadIn: d.leadIn, options: d.options, answerIndex: d.answerIndex, explanation: d.explanation, video: d.video, commonsStatus: null }]
+    return true
+  }
+  const deleteCourseQuestionUnified = async (qid: string): Promise<void> => {
+    if (dbOn) { await deleteCourseQuestion(qid); return }
+    demoCourseQuestions.current = demoCourseQuestions.current.filter((q) => q.id !== qid)
+  }
+  const submitToCommonsUnified = async (q: CourseQuestion): Promise<boolean> => {
+    if (dbOn) return submitCourseQuestionToCommons(q)
+    demoCourseQuestions.current = demoCourseQuestions.current.map((x) => (x.id === q.id ? { ...x, commonsStatus: 'in_review' } : x))
+    return true
+  }
+  const assignedItems: PracticeItem[] = assigned.map(assignedToPracticeItem)
   // Gamification stats, computed from every answered question (Practice + Learn),
   // completed cases, and study days. Used by both the nav chip and My progress.
   const gameStats: GameStats = (() => {
@@ -330,12 +367,12 @@ export default function App() {
     ? dbContrib.map((c) => ({ id: c.id, system: c.system, level: c.level, vignette: c.vignette, leadIn: c.lead_in, options: c.options, answerIndex: c.answer_index, explanation: c.explanation, status: c.status, citableId: c.citable_id, authorId: c.author_id, authorName: c.author_name, reviews: c.reviews.map((r) => ({ reviewerId: r.reviewer_id, reviewerName: r.reviewer_name, decision: r.decision })) }))
     : contrib.qs.map((q) => ({ id: q.id, system: q.system, level: q.level, vignette: q.vignette, leadIn: q.leadIn, options: q.options, answerIndex: q.answerIndex, explanation: q.explanation, status: q.status, citableId: q.citableId, authorId: q.authorId, authorName: userName(q.authorId), reviews: q.reviews.map((r) => ({ reviewerId: r.reviewerId, reviewerName: userName(r.reviewerId), decision: r.decision })) }))
 
-  const PracticeBank = ({ list, empty }: { list: PracticeItem[]; empty: ReactNode }) => (
+  const PracticeBank = ({ list, empty, flag = true }: { list: PracticeItem[]; empty: ReactNode; flag?: boolean }) => (
     <div>
       {list.length === 0 ? <div className="inprog">{empty}</div> :
         list.map((q) => <PracticeCard key={q.id} q={q} picked={picks[q.id]} onPick={(i) => pick(q.id, i, i === q.answerIndex)}
           rated={pst.rate[q.id] || 0} onRate={(n) => rate(q.id, n)} onGoCase={() => goCase(q.caseId)} onOpenAuthor={openAuthor}
-          onFlag={me ? (reason, comment) => flagQuestion(q.qkey, reason, comment) : undefined} />)}
+          onFlag={flag && me ? (reason, comment) => flagQuestion(q.qkey, reason, comment) : undefined} />)}
     </div>
   )
 
@@ -345,6 +382,7 @@ export default function App() {
         <p className="sec-lead">New to a topic? Start in Learn, then return here to test yourself.</p></div>
       <div className="cat-tabs">
         <button className={'cat-tab ' + (psub === 'bank' ? 'active' : '')} onClick={() => setPsub('bank')}>Question bank<span className="cat-count">{QS.length}</span></button>
+        {assignedItems.length > 0 && <button className={'cat-tab ' + (psub === 'assigned' ? 'active' : '')} onClick={() => { setPsub('assigned'); setPicks({}) }}>Assigned by instructor<span className="cat-count">{assignedItems.length}</span></button>}
         <button className={'cat-tab ' + (psub === 'srq' ? 'active' : '')} onClick={() => { setPsub('srq'); setPicks({}) }}>Spaced review<span className="cat-count">{due.length}</span></button>
         <button className={'cat-tab ' + (psub === 'prog' ? 'active' : '')} onClick={() => setPsub('prog')}>My progress</button>
       </div>
@@ -354,6 +392,12 @@ export default function App() {
           <div className="cat-tabs">{bankCats.map((t) => { const count = t === 'All' ? QS.length : QS.filter((q) => categoryOf(q.system) === t).length; return (<button key={t} className={'cat-tab ' + (pcat === t ? 'active' : '')} onClick={() => setPcat(t)}>{t === 'All' ? 'All topics' : t}<span className="cat-count">{count}</span></button>) })}</div>
           <input className="os-input" style={{ marginBottom: 14 }} value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Search questions by topic, system, or keyword" />
           <PracticeBank list={pq.trim() ? bankList.filter((q) => (q.vignette + ' ' + q.leadIn + ' ' + q.system + ' ' + q.topic).toLowerCase().includes(pq.trim().toLowerCase())) : bankList} empty={<p>No questions match your search.</p>} />
+        </>
+      )}
+      {psub === 'assigned' && (
+        <>
+          <div className="banner">{assignedItems.length} question{assignedItems.length === 1 ? '' : 's'} your instructor wrote for your class. These are assigned for your course and are not part of the peer-reviewed commons.</div>
+          <PracticeBank list={assignedItems} flag={false} empty={<p>Your instructor has not assigned any questions yet.</p>} />
         </>
       )}
       {psub === 'srq' && (
@@ -528,7 +572,8 @@ export default function App() {
       {mode === 'about' && <AboutView />}
 
       {mode === 'faculty' && (me
-        ? <TeachView courses={teachCourses} onCreate={onCreateCourseUnified} onLoadCohort={loadCohortUnified} keySystem={keySystem} />
+        ? <TeachView courses={teachCourses} onCreate={onCreateCourseUnified} onLoadCohort={loadCohortUnified} keySystem={keySystem}
+            onLoadQuestions={loadCourseQuestionsUnified} onCreateQuestion={createCourseQuestionUnified} onDeleteQuestion={deleteCourseQuestionUnified} onSubmitToCommons={submitToCommonsUnified} />
         : <SignIn intent="the faculty view" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('faculty') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} onDemoInstructor={startDemoInstructor} />)}
 
       {mode === 'settings' && (me

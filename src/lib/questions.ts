@@ -2,7 +2,37 @@ import { boardLint } from './boardLint'
 import { CASES } from '../data/cases'
 import { COMMUNITY_AUTHORS } from '../data/authors'
 import boardJson from '../data/questions.board.json'
+import type { CourseQuestion } from './courses'
 import type { Attribution, Author, BoardQuestion, PracticeItem } from '../types'
+
+/** The attempt/cohort key for an instructor-assigned course question. */
+export function assignedKey(id: string): string {
+  return 'course:' + id
+}
+
+/** Shape an instructor's course question as a Practice item ('Assigned' source).
+ *  id == qkey so a student's recorded attempt key matches the instructor's
+ *  cohort lookup (both 'course:<id>'). */
+export function assignedToPracticeItem(q: CourseQuestion): PracticeItem {
+  const it = {
+    id: assignedKey(q.id),
+    caseId: null,
+    qkey: assignedKey(q.id),
+    caseTitle: '',
+    system: q.system,
+    topic: '',
+    vignette: q.vignette,
+    leadIn: q.leadIn,
+    options: q.options,
+    answerIndex: q.answerIndex,
+    explanation: q.explanation,
+    source: 'Assigned',
+    video: q.video || null,
+    assignedBy: q.authorName || 'Your instructor',
+  } as PracticeItem
+  it.lint = boardLint(it)
+  return it
+}
 
 /** Board items derived from each case's MS1 questions (Ward Moments source). */
 export function buildQuestions(): PracticeItem[] {

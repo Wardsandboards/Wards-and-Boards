@@ -1,23 +1,31 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { TeachView } from '../src/components/teach'
-import type { Course, CohortStats } from '../src/lib/courses'
+import type { Course, CohortStats, CourseQuestion } from '../src/lib/courses'
 
 const courses: Course[] = [{ id: 'c1', name: 'MS3 IM block', code: 'ABC234', created_at: '' }]
 const cohort: CohortStats = { size: 5, byKey: { 'chf:1A': { attempts: 10, correct: 8 }, 'iron:1A': { attempts: 4, correct: 1 } } }
 const keySystem = { 'chf:1A': 'Cardiovascular', 'iron:1A': 'Hematology' }
 
+// Default stub props; tests override what they exercise.
+const base = () => ({
+  courses, onCreate: () => {}, onLoadCohort: () => Promise.resolve(cohort), keySystem,
+  onLoadQuestions: () => Promise.resolve([] as CourseQuestion[]),
+  onCreateQuestion: () => Promise.resolve(true), onDeleteQuestion: () => Promise.resolve(),
+  onSubmitToCommons: () => Promise.resolve(true),
+})
+
 describe('TeachView', () => {
   it('creates a class with the typed name', () => {
     const onCreate = vi.fn()
-    render(<TeachView courses={courses} onCreate={onCreate} onLoadCohort={() => Promise.resolve(cohort)} keySystem={keySystem} />)
+    render(<TeachView {...base()} onCreate={onCreate} />)
     fireEvent.change(screen.getByPlaceholderText(/internal medicine block/i), { target: { value: 'New class' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
     expect(onCreate).toHaveBeenCalledWith('New class')
   })
 
   it('opens a course and shows privacy-safe cohort accuracy by system', async () => {
-    render(<TeachView courses={courses} onCreate={() => {}} onLoadCohort={() => Promise.resolve(cohort)} keySystem={keySystem} />)
+    render(<TeachView {...base()} />)
     fireEvent.click(screen.getByText('MS3 IM block'))
     expect(await screen.findByText('Cardiovascular — 8/10 (80%)')).toBeTruthy()
     expect(screen.getByText('Hematology — 1/4 (25%)')).toBeTruthy()
@@ -25,7 +33,60 @@ describe('TeachView', () => {
   })
 
   it('shows the empty state with no classes', () => {
-    render(<TeachView courses={[]} onCreate={() => {}} onLoadCohort={() => Promise.resolve(cohort)} keySystem={keySystem} />)
+    render(<TeachView {...base()} courses={[]} />)
     expect(screen.getByText(/No classes yet/)).toBeTruthy()
+  })
+
+  it('rejects an empty question at the Forge gate without calling onCreateQuestion', async () => {
+    const onCreateQuestion = vi.fn(() => Promise.resolve(true))
+    render(<TeachView {...base()} onCreateQuestion={onCreateQuestion} />)
+    fireEvent.click(screen.getByText('MS3 IM block'))
+    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Run Forge gate/ }))
+    expect(await screen.findByText(/Fix these before assigning/)).toBeTruthy()
+    expect(onCreateQuestion).not.toHaveBeenCalled()
+  })
+
+  it('authors a board-valid question and assigns it to the class', async () => {
+    const onCreateQuestion = vi.fn(() => Promise.resolve(true))
+    render(<TeachView {...base()} onCreateQuestion={onCreateQuestion} />)
+    fireEvent.click(screen.getByText('MS3 IM block'))
+    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
+    fireEvent.change(screen.getByPlaceholderText('e.g. Cardiology'), { target: { value: 'Cardiology' } })
+    fireEvent.change(screen.getByPlaceholderText(/A 68-year-old patient comes to/), { target: { value: 'A 70 year old patient reports chest pressure after climbing stairs.' } })
+    fireEvent.change(screen.getByPlaceholderText(/Which of the following is the most likely diagnosis/), { target: { value: 'Which of the following is the most appropriate next step?' } })
+    const opts = ['Aspirin', 'Warfarin', 'Clopidogrel', 'Heparin', 'Metoprolol']
+    opts.forEach((o, i) => fireEvent.change(screen.getByPlaceholderText('Option ' + String.fromCharCode(65 + i)), { target: { value: o } }))
+    fireEvent.change(screen.getByPlaceholderText(/Why the key is right/), { target: { value: 'Aspirin is the right first step here.' } })
+    fireEvent.click(screen.getByRole('button', { name: /Run Forge gate/ }))
+    await waitFor(() => expect(onCreateQuestion).toHaveBeenCalledWith('c1', expect.objectContaining({ leadIn: 'Which of the following is the most appropriate next step?', system: 'Cardiology' })))
+  })
+
+  it('submits an existing class question to the public commons', async () => {
+    const q: CourseQuestion = { id: 'q1', courseId: 'c1', level: 'step1', system: 'Cardiology', vignette: 'v', leadIn: 'Which of the following is best?', options: ['a', 'b', 'c', 'd'], answerIndex: 0, explanation: 'e', video: '', commonsStatus: null }
+    const onSubmitToCommons = vi.fn(() => Promise.resolve(true))
+    render(<TeachView {...base()} onLoadQuestions={() => Promise.resolve([q])} onSubmitToCommons={onSubmitToCommons} />)
+    fireEvent.click(screen.getByText('MS3 IM block'))
+    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Submit to the public commons/ }))
+    expect(onSubmitToCommons).toHaveBeenCalledWith(q)
+  })
+
+  it('shows live commons status instead of a submit button once submitted', async () => {
+    const q: CourseQuestion = { id: 'q1', courseId: 'c1', level: 'step1', system: 'Cardiology', vignette: 'v', leadIn: 'Which of the following is best?', options: ['a', 'b', 'c', 'd'], answerIndex: 0, explanation: 'e', video: '', commonsStatus: 'in_review' }
+    render(<TeachView {...base()} onLoadQuestions={() => Promise.resolve([q])} />)
+    fireEvent.click(screen.getByText('MS3 IM block'))
+    fireEvent.click(await screen.findByRole('button', { name: /Your questions/ }))
+    expect(await screen.findByText('In peer review')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Submit to the public commons/ })).toBeNull()
+  })
+
+  it('shows per-question cohort accuracy for the instructors own questions', async () => {
+    const q: CourseQuestion = { id: 'q1', courseId: 'c1', level: 'step1', system: 'Cardiology', vignette: 'v', leadIn: 'Which murmur is expected?', options: ['a', 'b', 'c', 'd'], answerIndex: 0, explanation: 'e', video: '', commonsStatus: null }
+    const cohortWithAssigned: CohortStats = { size: 5, byKey: { 'course:q1': { attempts: 8, correct: 6 } } }
+    render(<TeachView {...base()} onLoadQuestions={() => Promise.resolve([q])} onLoadCohort={() => Promise.resolve(cohortWithAssigned)} />)
+    fireEvent.click(screen.getByText('MS3 IM block'))
+    expect(await screen.findByText(/How your class did on your questions/)).toBeTruthy()
+    expect(screen.getByText('Which murmur is expected? — 6/8 (75%)')).toBeTruthy()
   })
 })

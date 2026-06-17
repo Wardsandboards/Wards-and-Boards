@@ -45,6 +45,18 @@ describe('PracticeCard', () => {
     expect(container.querySelector('iframe')).toBeNull()
   })
 
+  it('gives an instructor-assigned question an honest byline and no peer-review credit', () => {
+    const assigned: PracticeItem = { ...q, id: 'course:1', qkey: 'course:1', source: 'Assigned', assignedBy: 'Dr. Frank', topic: '' }
+    const { container } = render(<PracticeCard q={assigned} picked={2} onPick={noop} rated={0} onRate={noop} onGoCase={noop} />)
+    const byline = container.querySelector('.q-byline') as HTMLElement
+    expect(byline.textContent).toContain('Assigned by your instructor')
+    expect(byline.textContent).toContain('Dr. Frank')
+    // It must NOT claim peer review.
+    expect(container.querySelector('.verify-badge')).toBeNull()
+    expect(screen.queryByText(/review board/)).toBeNull()
+    expect(screen.getByText(/not part of the peer-reviewed commons/)).toBeTruthy()
+  })
+
   it('uses the real attribution for a community question and does not make it clickable', () => {
     const onOpenAuthor = vi.fn()
     const community: PracticeItem = {
