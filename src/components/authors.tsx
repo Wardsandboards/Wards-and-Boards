@@ -74,16 +74,20 @@ export function AuthorsView({ sel, setSel, authors = COMMUNITY_AUTHORS, isReal =
           <AuQuestion author={COMMUNITY_AUTHORS[0]} onOpenAuthor={setSel} />
         </div>
       )}
-      <div className="sec-head"><div className="kicker">Leaderboard</div><h2 className="h2">Top authors</h2>
-        <p className="sec-lead">Ranked by questions published and peer reviews. Open an author to see their page.</p></div>
-      <div className="lb">{sorted.map((a, i) => (
-        <button className="lb-row" key={a.id} onClick={() => setSel(a)}>
-          <span className="lb-rank">{i + 1}</span><AuAvatar a={a} size={40} />
-          <span className="lb-name">{a.name} <span className="ab-cred">{a.creds}</span><br /><span className="lb-sub">{a.role} · {a.institution}</span></span>
-          <span className="lb-stat"><b>{a.published}</b><span>published</span></span>
-          <span className="lb-stat"><b>{a.reviews}</b><span>reviews</span></span>
-        </button>
-      ))}</div>
+      {sorted.length === 0 ? (
+        <div className="inprog"><p>Published questions will credit their authors here. Once a contributor's question is reviewed by the board and published, their profile appears on this page.</p></div>
+      ) : (<>
+        <div className="sec-head"><div className="kicker">Leaderboard</div><h2 className="h2">Top authors</h2>
+          <p className="sec-lead">Ranked by questions published and peer reviews. Open an author to see their page.</p></div>
+        <div className="lb">{sorted.map((a, i) => (
+          <button className="lb-row" key={a.id} onClick={() => setSel(a)}>
+            <span className="lb-rank">{i + 1}</span><AuAvatar a={a} size={40} />
+            <span className="lb-name">{a.name} <span className="ab-cred">{a.creds}</span><br /><span className="lb-sub">{a.role} · {a.institution}</span></span>
+            <span className="lb-stat"><b>{a.published}</b><span>published</span></span>
+            <span className="lb-stat"><b>{a.reviews}</b><span>reviews</span></span>
+          </button>
+        ))}</div>
+      </>)}
       <div className="sec-head" style={{ marginTop: 38 }}><div className="kicker">How you earn credit</div><h2 className="h2">Badges</h2>
         <p className="sec-lead">Recognition for writing and reviewing. Badges show on your profile and next to your name across the site.</p></div>
       <div className="badge-grid">{BADGE_CATALOG.map((b, i) => (

@@ -33,22 +33,38 @@ export function Pyramid() {
 }
 
 export function AnkiButton({ front, back, style }: LearningPoint & { style?: CSSProperties }) {
+  const [open, setOpen] = useState(false)
+  const [f, setF] = useState(front)
+  const [b, setB] = useState(back)
   const [copied, setCopied] = useState(false)
+  // Reset the editable copy when the underlying card changes (e.g. next question).
+  useEffect(() => { setF(front); setB(back); setOpen(false); setCopied(false) }, [front, back])
   const copy = () => {
     const clean = (s: string) => String(s).replace(/[\t\r\n]+/g, ' ')
-    navigator.clipboard.writeText(clean(front) + '\t' + clean(back))
+    navigator.clipboard.writeText(clean(f) + '\t' + clean(b))
     setCopied(true)
     setTimeout(() => setCopied(false), 9000)
   }
   return (
     <span className="anki-wrap" style={style}>
-      <button className="anki-btn" onClick={copy} title="Copies the key learning point for this question as one Anki card: a recall cue is the Front, the learning point is the Back, separated by a Tab.">
-        {copied ? 'Copied for Anki ✓' : '⎘ Anki card'}
-      </button>
-      {copied && (
-        <span className="anki-help">
-          Copied the <b>key learning point</b> as <b>Front&nbsp;⇥&nbsp;Back</b>. To add it in Anki: paste into a blank text file and save it, then in Anki choose <b>File ▸ Import</b>, set note type to <b>Basic</b> and <b>Fields separated by: Tab</b>.
-        </span>
+      <button className="anki-btn" onClick={() => { setOpen((o) => !o); setCopied(false) }} title="Preview and edit this Anki card, then copy it.">⎘ Anki card</button>
+      {open && (
+        <div className="anki-pop">
+          <div className="anki-pop-h">Edit if you like, then copy. The Front is the recall cue; the Back is the learning point.</div>
+          <label className="anki-lbl">Front</label>
+          <textarea className="anki-ta" rows={2} value={f} onChange={(e) => setF(e.target.value)} />
+          <label className="anki-lbl">Back</label>
+          <textarea className="anki-ta" rows={3} value={b} onChange={(e) => setB(e.target.value)} />
+          <div className="anki-pop-actions">
+            <button className="anki-copy" onClick={copy}>{copied ? 'Copied ✓' : 'Copy for Anki'}</button>
+            <button className="anki-x" onClick={() => setOpen(false)}>Close</button>
+          </div>
+          {copied && (
+            <div className="anki-help" style={{ position: 'static', width: 'auto', marginTop: 10, boxShadow: 'none' }}>
+              Copied as <b>Front&nbsp;⇥&nbsp;Back</b>. In Anki: paste into a blank text file and save it, then <b>File ▸ Import</b>, note type <b>Basic</b>, <b>Fields separated by: Tab</b>.
+            </div>
+          )}
+        </div>
       )}
     </span>
   )
