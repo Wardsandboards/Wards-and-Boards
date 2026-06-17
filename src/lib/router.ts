@@ -13,7 +13,7 @@ export interface Route {
 }
 
 // Top-level views that map 1:1 to /<mode>. (learn + authors also take a sub-id.)
-const VIEW_MODES = new Set(['home', 'learn', 'practice', 'contribute', 'authors', 'about', 'admin', 'signin', 'privacy', 'terms', 'settings'])
+const VIEW_MODES = new Set(['home', 'learn', 'practice', 'contribute', 'authors', 'about', 'admin', 'signin', 'privacy', 'terms', 'settings', 'teach'])
 
 /** Parse a pathname into app state. Unknown paths fall back to home. */
 export function parseRoute(pathname: string): Route {

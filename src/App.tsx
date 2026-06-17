@@ -22,6 +22,9 @@ import type { GameStats } from './lib/gamify'
 import { AuthorsView } from './components/authors'
 import { AdminQueue, ContributorApplication, FlagQueue, SignIn } from './components/auth'
 import { SettingsView } from './components/settings'
+import { TeachView } from './components/teach'
+import { createCourse, loadCohort, loadMyCourses } from './lib/courses'
+import type { Course } from './lib/courses'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
@@ -43,6 +46,7 @@ export default function App() {
   const [dbContrib, setDbContrib] = useState<DbContribution[]>([])
   const [dbCommunity, setDbCommunity] = useState<CommunityQuestion[]>([])
   const [dbAuthors, setDbAuthors] = useState<DbAuthor[]>([])
+  const [dbCourses, setDbCourses] = useState<Course[]>([])
   // Question flags: DB-backed when configured; localStorage on the mock.
   const [dbFlags, setDbFlags] = useState<DbFlag[]>([])
   const [mockFlags, setMockFlags] = useState<DbFlag[]>(() => loadLS('os_flags', []))
@@ -142,6 +146,8 @@ export default function App() {
   const refreshCommunity = () => { if (dbEnabled()) loadCommunityQuestions().then(setDbCommunity) }
   const refreshAuthors = () => { if (dbEnabled()) loadAuthors().then(setDbAuthors) }
   const refreshFlags = () => { if (dbEnabled()) loadOpenFlags().then(setDbFlags) }
+  const refreshCourses = () => { if (dbEnabled()) loadMyCourses().then(setDbCourses) }
+  const onCreateCourse = (name: string) => { createCourse(name).then((c) => { if (c) refreshCourses() }) }
   const flagQuestion = (questionKey: string, reason: string, comment: string) => {
     if (!me) return
     if (dbOn) { submitFlag(questionKey, reason, comment); return }
@@ -199,7 +205,7 @@ export default function App() {
   // Published community questions (Practice bank) are public; load them once the
   // backend is on. The workspace items follow the signed-in contributor.
   useEffect(() => { refreshCommunity(); refreshAuthors() }, [])
-  useEffect(() => { if (me && dbEnabled()) refreshContrib() }, [me?.email])
+  useEffect(() => { if (me && dbEnabled()) { refreshContrib(); refreshCourses() } }, [me?.email])
 
   // Once signed in with a real backend, load this user's study data from Supabase
   // so progress, ratings, and attempts follow them across devices.
@@ -247,12 +253,13 @@ export default function App() {
   const due = QS.filter((q) => { const l = lastAtt(q.id); return l && !l.correct })
   const bankCats = (() => { const pr: string[] = []; CATEGORY_ORDER.forEach((k) => { if (QS.some((q) => categoryOf(q.system) === k)) pr.push(k) }); QS.forEach((q) => { const k = categoryOf(q.system); if (!pr.includes(k)) pr.push(k) }); return ['All', ...pr] })()
   const bankList = pcat === 'All' ? QS : QS.filter((q) => categoryOf(q.system) === pcat)
+  // Map every answer key (Practice ids + qkeys, Learn case:question keys) to a system.
+  const keySystem: Record<string, string> = {}
+  QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
+  cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
   // Gamification stats, computed from every answered question (Practice + Learn),
   // completed cases, and study days. Used by both the nav chip and My progress.
   const gameStats: GameStats = (() => {
-    const keySystem: Record<string, string> = {}
-    QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
-    cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
     let answers = 0, correct = 0
     const seen = new Set<string>()
     const bySys: Record<string, { c: number; t: number }> = {}
@@ -446,6 +453,7 @@ export default function App() {
           <button className={'nav-link ' + (mode === 'contribute' ? 'active' : '')} onClick={() => setMode('contribute')}>Contribute</button>
           <button className={'nav-link ' + (mode === 'authors' ? 'active' : '')} onClick={() => { setAuthorSel(null); setMode('authors') }}>Authors</button>
           <button className={'nav-link ' + (mode === 'about' ? 'active' : '')} onClick={() => setMode('about')}>About</button>
+          {me && <button className={'nav-link ' + (mode === 'teach' ? 'active' : '')} onClick={() => setMode('teach')}>Teach</button>}
           {isAdmin && <button className={'nav-link ' + (mode === 'admin' ? 'active' : '')} onClick={() => setMode('admin')}>Admin</button>}
         </div>
         <div className="nav-user">
@@ -496,6 +504,10 @@ export default function App() {
       {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} authors={showRealAuthors ? realAuthors : undefined} isReal={showRealAuthors} />}
 
       {mode === 'about' && <AboutView />}
+
+      {mode === 'teach' && (me
+        ? <TeachView courses={dbCourses} onCreate={onCreateCourse} onLoadCohort={loadCohort} keySystem={keySystem} />
+        : <SignIn intent="Teach" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('teach') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />)}
 
       {mode === 'settings' && (me
         ? <SettingsView fallbackName={me.name} email={me.email} displayName={mySettings.display_name} bio={mySettings.bio} courseCode={mySettings.course_code} onSave={saveSettings} />
