@@ -16,7 +16,7 @@ import type { CommunityQuestion, DbAuthor, DbContribution, DbFlag, DbProfile } f
 import { WMLogo } from './components/common'
 import { CaseView, LearnLibrary, WardMomentIntro } from './components/learn'
 import { PracticeCard } from './components/practice'
-import { ProgressDashboard } from './components/progress'
+import { GameChip, ProgressDashboard } from './components/progress'
 import { streakFromDays, todayKey } from './lib/gamify'
 import type { GameStats } from './lib/gamify'
 import { AuthorsView } from './components/authors'
@@ -247,6 +247,28 @@ export default function App() {
   const due = QS.filter((q) => { const l = lastAtt(q.id); return l && !l.correct })
   const bankCats = (() => { const pr: string[] = []; CATEGORY_ORDER.forEach((k) => { if (QS.some((q) => categoryOf(q.system) === k)) pr.push(k) }); QS.forEach((q) => { const k = categoryOf(q.system); if (!pr.includes(k)) pr.push(k) }); return ['All', ...pr] })()
   const bankList = pcat === 'All' ? QS : QS.filter((q) => categoryOf(q.system) === pcat)
+  // Gamification stats, computed from every answered question (Practice + Learn),
+  // completed cases, and study days. Used by both the nav chip and My progress.
+  const gameStats: GameStats = (() => {
+    const keySystem: Record<string, string> = {}
+    QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
+    cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
+    let answers = 0, correct = 0
+    const seen = new Set<string>()
+    const bySys: Record<string, { c: number; t: number }> = {}
+    Object.keys(pst.att).forEach((k) => {
+      const arr = pst.att[k]; if (!arr.length) return
+      seen.add(k)
+      const sys = keySystem[k] || 'Other'
+      arr.forEach((a) => { answers++; if (a.correct) correct++; (bySys[sys] = bySys[sys] || { c: 0, t: 0 }).t++; if (a.correct) bySys[sys].c++ })
+    })
+    return {
+      answers, correct, seen: seen.size,
+      casesDone: Object.values(progress).filter((m) => Object.values(m).some(Boolean)).length,
+      streak: streakFromDays(days),
+      systems: Object.entries(bySys).map(([system, v]) => ({ system, correct: v.c, total: v.t })),
+    }
+  })()
   const markStudyDay = () => setDays((d) => { const t = todayKey(); if (d.includes(t)) return d; const nd = [...d, t]; saveLS('os_days', nd); return nd })
   const pick = (qid: string, i: number, correct: boolean) => { setPicks((s) => ({ ...s, [qid]: i })); if (me) { setPst((s) => { const att = { ...s.att }; att[qid] = [...(att[qid] || []), { correct }]; return { ...s, att } }); recordAttempt(qid, correct); markStudyDay() } }
   const rate = (qid: string, n: number) => { setPst((s) => ({ ...s, rate: { ...s.rate, [qid]: n } })); saveRating(qid, n) }
@@ -311,28 +333,7 @@ export default function App() {
           <PracticeBank list={due} empty={<p>Nothing due. Miss a few in the question bank and they will queue up here.</p>} />
         </>
       )}
-      {psub === 'prog' && (() => {
-        // Map every answer key (Practice ids + qkeys, and Learn case:question keys) to a system.
-        const keySystem: Record<string, string> = {}
-        QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
-        cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
-        let answers = 0, correct = 0
-        const seen = new Set<string>()
-        const bySys: Record<string, { c: number; t: number }> = {}
-        Object.keys(pst.att).forEach((k) => {
-          const arr = pst.att[k]; if (!arr.length) return
-          seen.add(k)
-          const sys = keySystem[k] || 'Other'
-          arr.forEach((a) => { answers++; if (a.correct) correct++; (bySys[sys] = bySys[sys] || { c: 0, t: 0 }).t++; if (a.correct) bySys[sys].c++ })
-        })
-        const gstats: GameStats = {
-          answers, correct, seen: seen.size,
-          casesDone: Object.values(progress).filter((m) => Object.values(m).some(Boolean)).length,
-          streak: streakFromDays(days),
-          systems: Object.entries(bySys).map(([system, v]) => ({ system, correct: v.c, total: v.t })),
-        }
-        return <ProgressDashboard stats={gstats} due={due.length} />
-      })()}
+      {psub === 'prog' && <ProgressDashboard stats={gameStats} due={due.length} />}
     </div></section>
   )
 
@@ -449,7 +450,8 @@ export default function App() {
         </div>
         <div className="nav-user">
           {me ? (
-            <span className="usermenu"><button className="userchip" style={{ background: 'none', border: 0, cursor: 'pointer', font: 'inherit', color: 'inherit' }} onClick={() => setMode('settings')}>{myName}</button>
+            <span className="usermenu"><GameChip stats={gameStats} onClick={() => { setMode('practice'); setPsub('prog') }} />
+              <button className="userchip" style={{ background: 'none', border: 0, cursor: 'pointer', font: 'inherit', color: 'inherit' }} onClick={() => setMode('settings')}>{myName}</button>
               <span className={'rolebadge ' + (isAdmin ? 'admin' : isContributor ? 'contributor' : 'learner')}>{isAdmin ? 'admin' : isContributor ? 'contributor' : 'learner'}</span>
               <button className="nav-link" onClick={() => setMode('settings')}>Settings</button>
               <button className="nav-link" onClick={signOut}>Sign out</button></span>

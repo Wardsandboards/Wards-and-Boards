@@ -1,6 +1,18 @@
 import { badgesFor, levelFor, xpFor } from '../lib/gamify'
 import type { GameStats } from '../lib/gamify'
 
+/** Compact level + XP bar + streak for the nav, linking to the full dashboard. */
+export function GameChip({ stats, onClick }: { stats: GameStats; onClick: () => void }) {
+  const lvl = levelFor(xpFor(stats))
+  return (
+    <button className="game-chip" onClick={onClick} title={'Level ' + (lvl.index + 1) + ' · ' + lvl.name + ' · ' + lvl.xp.toLocaleString() + ' XP. Open My progress.'}>
+      {stats.streak > 0 && <span className="game-chip-streak">🔥{stats.streak}</span>}
+      <span className="game-chip-lvl">Lv{lvl.index + 1}</span>
+      <span className="game-chip-bar"><span style={{ width: lvl.pct + '%' }} /></span>
+    </button>
+  )
+}
+
 export function ProgressDashboard({ stats, due }: { stats: GameStats; due: number }) {
   const xp = xpFor(stats)
   const lvl = levelFor(xp)

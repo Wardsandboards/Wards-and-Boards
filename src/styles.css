@@ -440,3 +440,12 @@ button.qb-link:hover .qb-name { color:var(--accent); }
 .game-streak-n { font-size:1.9rem; font-weight:800; color:var(--ink); }
 .game-streak-l { font-size:0.74rem; color:var(--mid); font-weight:700; }
 .badge-locked { opacity:0.4; filter:grayscale(1); }
+
+/* Nav level chip (compact gamification by the profile name) */
+.game-chip { display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:var(--panel);
+  border:1px solid var(--border); border-radius:999px; padding:3px 9px; font-family:inherit; }
+.game-chip:hover { border-color:var(--accent); }
+.game-chip-streak { font-size:0.78rem; font-weight:800; color:var(--ink); white-space:nowrap; }
+.game-chip-lvl { font-size:0.74rem; font-weight:800; color:var(--accent); letter-spacing:0.2px; }
+.game-chip-bar { width:46px; height:6px; border-radius:999px; background:color-mix(in srgb,var(--accent) 18%,transparent); overflow:hidden; }
+.game-chip-bar > span { display:block; height:100%; background:var(--accent); border-radius:999px; }
