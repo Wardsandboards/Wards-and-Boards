@@ -18,13 +18,14 @@ export function FlagQueue({ flags, onResolve }: { flags: { id: string; question_
   )
 }
 
-export function SignIn({ intent, users, onSignIn, onGoogle, googleLive, onDemo }: {
+export function SignIn({ intent, users, onSignIn, onGoogle, googleLive, onDemo, onDemoInstructor }: {
   intent?: string
   users: Record<string, User>
   onSignIn: (email: string, name: string) => void
   onGoogle?: () => void
   googleLive?: boolean
   onDemo?: () => void
+  onDemoInstructor?: () => void
 }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -37,7 +38,8 @@ export function SignIn({ intent, users, onSignIn, onGoogle, googleLive, onDemo }
         <button className="btn btn-primary g-btn" style={{ marginTop: 8 }} onClick={() => (onGoogle ? onGoogle() : onSignIn('you@med.school', 'You'))}>Continue with Google {!googleLive && <span className="g-note">demo</span>}</button>
         {onDemo && (<>
           <button className="btn ghost-btn" style={{ marginTop: 10, width: '100%' }} onClick={onDemo}>Preview as a sample student →</button>
-          <p className="g-note" style={{ marginTop: 8 }}>No account needed. Explore the product as a demo student; nothing is saved.</p>
+          {onDemoInstructor && <button className="btn ghost-btn" style={{ marginTop: 8, width: '100%' }} onClick={onDemoInstructor}>Preview as a sample instructor →</button>}
+          <p className="g-note" style={{ marginTop: 8 }}>No account needed. Explore the product as a demo; nothing is saved.</p>
         </>)}
         {googleLive && <p className="g-note" style={{ marginTop: 12 }}>For medical students and physicians. We only use your Google name and email to create your account.</p>}
         {!googleLive && (<>

@@ -18,7 +18,7 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem }: {
 
   return (
     <section className="section" style={{ paddingTop: 34 }}><div className="wrap" style={{ maxWidth: 760 }}>
-      <div className="sec-head"><div className="kicker">Teach</div><h2 className="h2">Your classes</h2>
+      <div className="sec-head"><div className="kicker">Faculty</div><h2 className="h2">Your courses</h2>
         <p className="sec-lead">Create a class, share its code with your students, and see where the cohort is strong and weak. Student data stays private. You see only anonymous aggregates, never an individual student's answers.</p></div>
 
       <div className="qblock" style={{ marginBottom: 18 }}>

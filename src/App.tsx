@@ -24,7 +24,7 @@ import { AdminQueue, ContributorApplication, FlagQueue, SignIn } from './compone
 import { SettingsView } from './components/settings'
 import { TeachView } from './components/teach'
 import { createCourse, loadCohort, loadMyCourses } from './lib/courses'
-import type { Course } from './lib/courses'
+import type { Course, CohortStats } from './lib/courses'
 import { Landing } from './components/landing'
 import { AboutView } from './components/about'
 import { PrivacyView, TermsView } from './components/legal'
@@ -47,6 +47,8 @@ export default function App() {
   const [dbCommunity, setDbCommunity] = useState<CommunityQuestion[]>([])
   const [dbAuthors, setDbAuthors] = useState<DbAuthor[]>([])
   const [dbCourses, setDbCourses] = useState<Course[]>([])
+  // Sample class shown in demo / no-backend mode so the Faculty view is populated.
+  const [demoCourses, setDemoCourses] = useState<Course[]>([{ id: 'demo-course-1', name: 'MS3 internal medicine block (sample)', code: 'WBDEMO', created_at: '' }])
   // Question flags: DB-backed when configured; localStorage on the mock.
   const [dbFlags, setDbFlags] = useState<DbFlag[]>([])
   const [mockFlags, setMockFlags] = useState<DbFlag[]>(() => loadLS('os_flags', []))
@@ -130,6 +132,7 @@ export default function App() {
   const signOut = () => { if (googleEnabled) signOutGoogle(); setProfile(null); setDbPending([]); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
   // Enter a sample-student demo (local only), and leave it cleanly.
   const startDemo = () => { setProfile(null); setDemoMode(true); signIn('demo.student@wardsandboards.com', 'Demo Student'); setActiveId(null); setMode('learn') }
+  const startDemoInstructor = () => { setProfile(null); setDemoMode(true); signIn('demo.instructor@wardsandboards.com', 'Demo Instructor'); setActiveId(null); setMode('faculty') }
   const exitDemo = () => { setDemoMode(false); setAuth((a) => ({ ...a, currentEmail: null })); setMode('home') }
   const applyContributor = (form: { training: string; institution: string; npi: string }) => {
     if (dbOn) { applyForContributor(form).then((p) => { if (p) setProfile(p) }); return }
@@ -264,6 +267,17 @@ export default function App() {
   const keySystem: Record<string, string> = {}
   QS.forEach((q) => { keySystem[q.id] = q.system; keySystem[q.qkey] = q.system })
   cases.forEach((c) => (c.ms1?.questions || []).forEach((q) => { keySystem[c.id + ':' + q.id] = c.system }))
+  // Faculty view data: real courses on the backend, a populated sample otherwise
+  // (demo / local) so the instructor view is demonstrable without real students.
+  const teachCourses = dbOn ? dbCourses : demoCourses
+  const demoCohort: CohortStats = (() => {
+    const byKey: CohortStats['byKey'] = {}
+    const accs = [0.84, 0.61, 0.73, 0.57, 0.9, 0.68, 0.5]
+    QS.slice(0, 14).forEach((q, i) => { const t = 17 + (i % 9); byKey[q.qkey] = { attempts: t, correct: Math.round(t * accs[i % accs.length]) } })
+    return { size: 26, byKey }
+  })()
+  const onCreateCourseUnified = (name: string) => { if (dbOn) { onCreateCourse(name); return } setDemoCourses((cs) => [...cs, { id: 'demo-course-' + (cs.length + 1), name, code: 'WB' + String(1000 + cs.length), created_at: '' }]) }
+  const loadCohortUnified = (id: string): Promise<CohortStats> => (dbOn ? loadCohort(id) : Promise.resolve(demoCohort))
   // Gamification stats, computed from every answered question (Practice + Learn),
   // completed cases, and study days. Used by both the nav chip and My progress.
   const gameStats: GameStats = (() => {
@@ -461,7 +475,7 @@ export default function App() {
           <button className={'nav-link ' + (mode === 'contribute' ? 'active' : '')} onClick={() => setMode('contribute')}>Contribute</button>
           <button className={'nav-link ' + (mode === 'authors' ? 'active' : '')} onClick={() => { setAuthorSel(null); setMode('authors') }}>Authors</button>
           <button className={'nav-link ' + (mode === 'about' ? 'active' : '')} onClick={() => setMode('about')}>About</button>
-          {me && <button className={'nav-link ' + (mode === 'teach' ? 'active' : '')} onClick={() => setMode('teach')}>Teach</button>}
+          <button className={'nav-link ' + (mode === 'faculty' ? 'active' : '')} onClick={() => setMode('faculty')}>Faculty</button>
           {isAdmin && <button className={'nav-link ' + (mode === 'admin' ? 'active' : '')} onClick={() => setMode('admin')}>Admin</button>}
         </div>
         <div className="nav-user">
@@ -485,11 +499,11 @@ export default function App() {
 
       {mode === 'home' && <Landing exampleCase={cases[0]} examplePractice={boardQS[0]} signedIn={!!me}
         onGetStarted={() => { if (me) { setActiveId(null); setMode('learn') } else setMode('signin') }}
-        onGoLearn={() => { setActiveId(null); setMode('learn') }} onGoPractice={() => setMode('practice')} onDemo={startDemo} />}
+        onGoLearn={() => { setActiveId(null); setMode('learn') }} onGoPractice={() => setMode('practice')} onDemo={startDemo} onDemoInstructor={startDemoInstructor} />}
 
-      {mode === 'signin' && <SignIn users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('home') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />}
+      {mode === 'signin' && <SignIn users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('home') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} onDemoInstructor={startDemoInstructor} />}
 
-      {mode === 'learn' && (!me ? <SignIn intent="Learn" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('learn') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />
+      {mode === 'learn' && (!me ? <SignIn intent="Learn" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('learn') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} onDemoInstructor={startDemoInstructor} />
         : caseData ? (
           <CaseView caseData={caseData} onBack={() => { setActiveId(null); setMode('learn') }} setProgress={setProgress}
             review={review} onToggleReview={toggleReview} answers={answers[caseData.id] || {}} setAnswers={setAnswers}
@@ -503,9 +517,9 @@ export default function App() {
           </div></section>
         ))}
 
-      {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} /> : <PracticeView />)}
+      {mode === 'practice' && (!me ? <SignIn intent="Practice" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('practice') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} onDemoInstructor={startDemoInstructor} /> : <PracticeView />)}
 
-      {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />
+      {mode === 'contribute' && (!me ? <SignIn intent="Contribute" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('contribute') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} onDemoInstructor={startDemoInstructor} />
         : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication name={me.name} appStatus={appStatus} onApply={applyContributor} /></div></section>
           : <ContributeWorkspace />)}
 
@@ -513,13 +527,13 @@ export default function App() {
 
       {mode === 'about' && <AboutView />}
 
-      {mode === 'teach' && (me
-        ? <TeachView courses={dbCourses} onCreate={onCreateCourse} onLoadCohort={loadCohort} keySystem={keySystem} />
-        : <SignIn intent="Teach" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('teach') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />)}
+      {mode === 'faculty' && (me
+        ? <TeachView courses={teachCourses} onCreate={onCreateCourseUnified} onLoadCohort={loadCohortUnified} keySystem={keySystem} />
+        : <SignIn intent="the faculty view" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('faculty') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} onDemoInstructor={startDemoInstructor} />)}
 
       {mode === 'settings' && (me
         ? <SettingsView fallbackName={me.name} email={me.email} displayName={mySettings.display_name} bio={mySettings.bio} courseCode={mySettings.course_code} onSave={saveSettings} />
-        : <SignIn intent="Settings" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('settings') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} />)}
+        : <SignIn intent="Settings" users={auth.users} onSignIn={(em, nm) => { signIn(em, nm); setMode('settings') }} onGoogle={googleEnabled ? signInWithGoogle : undefined} googleLive={googleEnabled} onDemo={startDemo} onDemoInstructor={startDemoInstructor} />)}
 
       {mode === 'privacy' && <PrivacyView />}
 
