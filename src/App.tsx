@@ -156,7 +156,10 @@ export default function App() {
     stub.qs = a.questions.map((q) => [q.title, q.system, 0, q.citable_id] as [string, string, number, string])
     return stub
   })
-  const authorsReal = realAuthors.some((a) => a.published > 0)
+  // On the real backend, the Authors tab always shows real contributors (with an
+  // empty state until anyone publishes), never the sample profiles. The sample
+  // showcase only appears on the local no-backend mock for development.
+  const showRealAuthors = dbEnabled()
   const decideApp = (id: string, decision: string) => {
     if (dbOn) { decideApplication(id, decision === 'approve' ? 'approve' : 'deny').then(refreshPending); return }
     setAuth((a) => {
@@ -479,7 +482,7 @@ export default function App() {
         : !isContributor ? <section className="section" style={{ paddingTop: 34 }}><div className="wrap"><ContributorApplication name={me.name} appStatus={appStatus} onApply={applyContributor} /></div></section>
           : <ContributeWorkspace />)}
 
-      {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} authors={authorsReal ? realAuthors : undefined} isReal={authorsReal} />}
+      {mode === 'authors' && <AuthorsView sel={authorSel} setSel={setAuthorSel} authors={showRealAuthors ? realAuthors : undefined} isReal={showRealAuthors} />}
 
       {mode === 'about' && <AboutView />}
 
@@ -501,7 +504,7 @@ export default function App() {
       )}
 
       <footer><div className="foot-inner">
-        <div className="foot-left">Wards & Boards · learn the why, then practice the questions · built by a practicing hospitalist</div>
+        <div className="foot-left">Wards & Boards · learn the why, then practice the questions · built by a future hospitalist</div>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           <button className="nav-link" onClick={() => setMode('about')}>About</button>
           <button className="nav-link" onClick={() => setMode('privacy')}>Privacy</button>

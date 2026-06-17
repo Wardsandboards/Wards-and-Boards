@@ -40,9 +40,18 @@ export function AboutView() {
       </div></section>
 
       <section className="section" style={{ paddingTop: 8 }}><div className="wrap" style={{ maxWidth: 760 }}>
+        <div className="sec-head"><div className="kicker">Peer review board</div><h2 className="h2">Reviewed by a credentialed board</h2>
+          <p className="sec-lead">Every published question is reviewed by the Wards & Boards peer review board. To sit on the board, a physician must have scored at or above the 90th percentile on USMLE Step 2 or Step 3, the same exams these questions prepare students for.</p></div>
+        <div className="contrib-callout">
+          <h3>Membership</h3>
+          <p>The board is being assembled now. If you are a resident or physician who scored in the 90th percentile or above on Step 2 or Step 3 and want to review questions for citable credit, get in touch.</p>
+        </div>
+      </div></section>
+
+      <section className="section" style={{ paddingTop: 8 }}><div className="wrap" style={{ maxWidth: 760 }}>
         <div className="contrib-callout"><div className="kicker">Who is building this</div>
-          <h3>Built by a practicing physician</h3>
-          <p>Wards & Boards is built by a practicing internal-medicine hospitalist who co-teaches first-year medical physiology. The teaching standard comes from the bedside, and every question is held to the same item-writing rigor used on the board exams.</p>
+          <h3>Built by a future hospitalist</h3>
+          <p>Wards & Boards is built by Aaron Frank, MD, a third-year internal medicine resident planning a career as a hospitalist. The teaching standard comes from the bedside, and every question is held to the same item-writing rigor used on the board exams.</p>
         </div>
       </div></section>
 
