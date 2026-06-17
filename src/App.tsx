@@ -515,7 +515,7 @@ export default function App() {
       )}
 
       <footer><div className="foot-inner">
-        <div className="foot-left">Wards & Boards · learn the why, then practice the questions · built by a future hospitalist</div>
+        <div className="foot-left">Wards & Boards · learn the why, then practice the questions</div>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           <button className="nav-link" onClick={() => setMode('about')}>About</button>
           <button className="nav-link" onClick={() => setMode('privacy')}>Privacy</button>
