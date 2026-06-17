@@ -64,7 +64,7 @@ describe('TeachView', () => {
     fireEvent.change(screen.getByPlaceholderText(/Which of the following is the most likely diagnosis/), { target: { value: 'Which of the following is the most appropriate next step?' } })
     const opts = ['Aspirin', 'Warfarin', 'Clopidogrel', 'Heparin', 'Metoprolol']
     opts.forEach((o, i) => fireEvent.change(screen.getByPlaceholderText('Option ' + String.fromCharCode(65 + i)), { target: { value: o } }))
-    fireEvent.change(screen.getByPlaceholderText(/Why the key is right/), { target: { value: 'Aspirin is the right first step here.' } })
+    fireEvent.change(screen.getByPlaceholderText(/Why the key is right/), { target: { value: 'Aspirin is the appropriate first step because it lowers early mortality in this setting.' } })
     fireEvent.click(screen.getByRole('button', { name: /Assign to my class/ }))
     await waitFor(() => expect(onCreateQuestion).toHaveBeenCalledWith('c1', expect.objectContaining({ leadIn: 'Which of the following is the most appropriate next step?', system: 'Cardiology' })))
   })
