@@ -124,8 +124,8 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
             <div className="qblock" style={{ marginTop: 12 }}>
               <div className="prompt-q" style={{ marginBottom: 4 }}>Write a question for your class</div>
               <p style={{ fontSize: '0.82rem', color: 'var(--mid)', margin: '0 0 12px' }}>As you fill this in, the Item Forge checklist beside it checks the question against board exam item-writing rules and shows a ✓, ✕, or — for each, so you can see what to work on. The hard checks (✕) must pass before you can assign it.</p>
-              <div style={{ display: 'flex', gap: 22, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                <div style={{ flex: '1 1 360px', minWidth: 280 }}>
+              <div className="author-cols">
+                <div>
                   <div className="os-grid" style={{ marginBottom: 12 }}>
                     <div><div className="prompt-q" style={{ marginBottom: 6 }}>Exam level</div>
                       <select className="os-input" value={draft.level} onChange={(e) => setField({ level: e.target.value })}><option value="step1">Step 1 (mechanism)</option><option value="shelf">Shelf / Step 2 (clinical)</option></select></div>
@@ -149,7 +149,7 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem, onLoadQu
                   <div style={{ marginTop: 14 }}><button className="submit-btn" style={{ marginTop: 0 }} disabled={busy} onClick={submitQuestion}>{busy ? 'Saving…' : 'Assign to my class'}</button></div>
                   {tried && !draftOk && <div className="feedback" style={{ borderLeftColor: 'var(--bad)' }}><div className="fb-result" style={{ color: 'var(--bad)' }}>Fix the hard flaws marked ✕ in the checklist before assigning.</div></div>}
                 </div>
-                <div style={{ flex: '1 1 280px', minWidth: 250, position: 'sticky', top: 12, alignSelf: 'flex-start' }}>
+                <div className="author-side">
                   <ForgeChecklist item={draft} />
                 </div>
               </div>

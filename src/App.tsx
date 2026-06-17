@@ -429,8 +429,8 @@ export default function App() {
         </div>
         {csub === 'author' && (
           <div className="qblock">
-            <div style={{ display: 'flex', gap: 22, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 380px', minWidth: 300 }}>
+            <div className="author-cols">
+              <div>
                 <div className="os-grid" style={{ marginBottom: 12 }}>
                   <div><div className="prompt-q" style={{ marginBottom: 6 }}>Exam level</div>
                     <select className="os-input" value={draft.level} onChange={(e) => setDraft({ ...draft, level: e.target.value })}><option value="step1">Step 1 (mechanism)</option><option value="shelf">Shelf / Step 2 (clinical)</option></select></div>
@@ -457,7 +457,7 @@ export default function App() {
                     <div className="fb-result" style={{ color: 'var(--bad)' }}>Fix the hard flaws marked ✕ in the checklist before submitting.</div></div>
                 )}
               </div>
-              <div style={{ flex: '1 1 300px', minWidth: 260, position: 'sticky', top: 12, alignSelf: 'flex-start' }}>
+              <div className="author-side">
                 <ForgeChecklist item={draft} />
               </div>
             </div>

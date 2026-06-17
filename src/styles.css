@@ -328,6 +328,11 @@ button.qb-link:hover .qb-name { color:var(--accent); }
   .os-pre { background:var(--bg-2); border:1.5px solid var(--border); border-radius:9px; padding:13px 15px; white-space:pre-wrap; font-size:0.82rem; color:var(--ink-soft); }
   .os-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
   @media (max-width:600px){ .os-grid { grid-template-columns:1fr; } }
+  /* Author form: inputs on the left, the live Forge checklist sticky on the right.
+     Grid (not flex-wrap) so it stays two-column down to a narrow pane, then stacks. */
+  .author-cols { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:22px; align-items:start; }
+  .author-side { position:sticky; top:12px; }
+  @media (max-width:560px){ .author-cols { grid-template-columns:1fr; } .author-side { position:static; } }
 
   /* Learning pyramid + steps */
   .climb-row { display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
