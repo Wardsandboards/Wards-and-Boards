@@ -30,10 +30,10 @@ export function TeachView({ courses, onCreate, onLoadCohort, keySystem }: {
       </div>
 
       {courses.length === 0 ? <div className="inprog"><p>No classes yet. Create one above, then share its code with your students. They enter it under Settings to join.</p></div> :
-        <div className="lb" style={{ marginBottom: 18 }}>{courses.map((c) => (
-          <button className="lb-row" key={c.id} onClick={() => open(c)}>
-            <span className="lb-name">{c.name}<br /><span className="lb-sub">Code: {c.code}</span></span>
-            <span className="lb-stat"><b>View</b><span>cohort</span></span>
+        <div className="course-list" style={{ marginBottom: 18 }}>{courses.map((c) => (
+          <button className="course-row" key={c.id} onClick={() => open(c)}>
+            <span className="course-name">{c.name}<span className="course-code">Code: {c.code}</span></span>
+            <span className="course-go">View cohort →</span>
           </button>
         ))}</div>}
 
