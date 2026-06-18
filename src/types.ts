@@ -155,6 +155,9 @@ export interface PracticeItem {
   attribution?: Attribution
   // Optional YouTube explainer link (as pasted); embedded when present.
   video?: string | null
+  // Set on questions a course instructor assigned (source 'Assigned'): the
+  // instructor's name, used for an honest byline (these are NOT peer-reviewed).
+  assignedBy?: string
 }
 
 export interface PracticeAttempt {

@@ -328,6 +328,11 @@ button.qb-link:hover .qb-name { color:var(--accent); }
   .os-pre { background:var(--bg-2); border:1.5px solid var(--border); border-radius:9px; padding:13px 15px; white-space:pre-wrap; font-size:0.82rem; color:var(--ink-soft); }
   .os-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
   @media (max-width:600px){ .os-grid { grid-template-columns:1fr; } }
+  /* Author form: inputs on the left, the live Forge checklist sticky on the right.
+     Grid (not flex-wrap) so it stays two-column down to a narrow pane, then stacks. */
+  .author-cols { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:22px; align-items:start; }
+  .author-side { position:sticky; top:12px; }
+  @media (max-width:560px){ .author-cols { grid-template-columns:1fr; } .author-side { position:static; } }
 
   /* Learning pyramid + steps */
   .climb-row { display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
@@ -449,3 +454,13 @@ button.qb-link:hover .qb-name { color:var(--accent); }
 .game-chip-lvl { font-size:0.74rem; font-weight:800; color:var(--accent); letter-spacing:0.2px; }
 .game-chip-bar { width:46px; height:6px; border-radius:999px; background:color-mix(in srgb,var(--accent) 18%,transparent); overflow:hidden; }
 .game-chip-bar > span { display:block; height:100%; background:var(--accent); border-radius:999px; }
+
+/* Faculty: course list rows (own layout, not the authors leaderboard grid) */
+.course-list { display:flex; flex-direction:column; gap:8px; }
+.course-row { display:flex; align-items:center; justify-content:space-between; gap:14px;
+  background:var(--panel); border:1.5px solid var(--border); border-radius:14px; padding:12px 16px;
+  cursor:pointer; text-align:left; font-family:inherit; width:100%; }
+.course-row:hover { border-color:var(--accent); }
+.course-name { display:flex; flex-direction:column; gap:2px; font-weight:800; color:var(--ink); font-size:0.92rem; line-height:1.35; }
+.course-code { font-weight:600; color:var(--mid); font-size:0.74rem; letter-spacing:0.3px; }
+.course-go { color:var(--accent); font-weight:800; font-size:0.82rem; white-space:nowrap; }

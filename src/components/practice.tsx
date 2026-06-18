@@ -44,13 +44,18 @@ export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpe
   // profile page yet, so their byline is not clickable.
   const att = q.attribution || attributionFor(q)
   const onAuthor = q.attribution ? undefined : onOpenAuthor
+  // Instructor-assigned questions are class-private, NOT peer-reviewed, so they
+  // get an honest byline (no peer-review badge, no review-board credit).
+  const assigned = q.source === 'Assigned'
   return (
     <div className="qblock">
       <div className="qid"><span className="os-badge src">{q.source}</span>{' '}
-        <span className={'os-badge ' + (q.lint.ok ? 'ready' : 'polish')}>{q.lint.ok ? 'board-ready' : 'needs polish'}</span>
-        <span style={{ color: 'var(--mid)', fontWeight: 700, letterSpacing: 0, textTransform: 'none', marginLeft: 6 }}>{q.system} · {q.topic}</span>
+        {!assigned && <span className={'os-badge ' + (q.lint.ok ? 'ready' : 'polish')}>{q.lint.ok ? 'board-ready' : 'needs polish'}</span>}
+        <span style={{ color: 'var(--mid)', fontWeight: 700, letterSpacing: 0, textTransform: 'none', marginLeft: 6 }}>{q.system}{q.topic ? ' · ' + q.topic : ''}</span>
         <AnkiButton front={anki.front} back={anki.back} style={{ float: 'right' }} /></div>
-      <QByline att={att} onOpenAuthor={onAuthor} />
+      {assigned
+        ? <div className="q-byline"><span className="qb-link"><span className="qb-name"><span className="qb-label">Assigned by your instructor: </span>{q.assignedBy}</span></span></div>
+        : <QByline att={att} onOpenAuthor={onAuthor} />}
       <div className="vignette"><div className="vignette-label">Clinical Vignette</div>{q.vignette}</div>
       <p className="qstem">{q.leadIn}</p>
       <div className="choices">{q.options.map((o, i) => {
@@ -71,7 +76,9 @@ export function PracticeCard({ q, picked, onPick, rated, onRate, onGoCase, onOpe
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
             </div></div>
           )}
-          <div className="qb-rev">Authored by <b>{att.author.name}</b>. Reviewed by the <b>Wards & Boards review board</b>.</div>
+          <div className="qb-rev">{assigned
+            ? <>Assigned by your instructor for your class. This question is <b>not part of the peer-reviewed commons</b>.</>
+            : <>Authored by <b>{att.author.name}</b>. Reviewed by the <b>Wards & Boards review board</b>.</>}</div>
           <div className="case-actions">
             <span className="os-stars">{[1, 2, 3, 4, 5].map((n) => <span key={n} onClick={() => onRate(n)}>{n <= rated ? <b>★</b> : '☆'}</span>)}</span>
             {q.caseId && <button className="ghost-btn" onClick={onGoCase}>See the mechanism in Learn → {q.caseTitle}</button>}
